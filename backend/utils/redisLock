@@ -1,0 +1,59 @@
+// utils/redisLock.js
+
+async function acquireRedisLock(redis, key, ttlSec = 10) {
+  const value = `${process.pid}:${Date.now()}:${Math.random()}`;
+
+  const result = await redis.set(key, value, {
+    NX: true, // 이미 있으면 실패
+    EX: ttlSec, // TTL (자동 해제)
+  });
+
+  return result === "OK" ? value : null;
+}
+
+async function releaseRedisLock(redis, key, value) {
+  const lua = `
+    if redis.call("GET", KEYS[1]) == ARGV[1] then
+      return redis.call("DEL", KEYS[1])
+    else
+      return 0
+    end
+  `;
+
+  try {
+    return await redis.eval(lua, {
+      keys: [key],
+      arguments: [value],
+    });
+  } catch (err) {
+    console.error(`[LOCK][RELEASE_ERROR] key=${key}`, err);
+    return 0;
+  }
+}
+
+// 🔥 추가 (추천) → TTL 연장 (long 작업용)
+async function extendRedisLock(redis, key, value, ttlSec = 10) {
+  const lua = `
+    if redis.call("GET", KEYS[1]) == ARGV[1] then
+      return redis.call("EXPIRE", KEYS[1], ARGV[2])
+    else
+      return 0
+    end
+  `;
+
+  try {
+    return await redis.eval(lua, {
+      keys: [key],
+      arguments: [value, ttlSec],
+    });
+  } catch (err) {
+    console.error(`[LOCK][EXTEND_ERROR] key=${key}`, err);
+    return 0;
+  }
+}
+
+module.exports = {
+  acquireRedisLock,
+  releaseRedisLock,
+  extendRedisLock, // ← 나중에 필요함
+};

@@ -1,0 +1,62 @@
+.print-container {
+  padding: 20px;
+  font-family: "Segoe UI", sans-serif;
+}
+
+.title {
+  font-size: 20px;
+  margin-bottom: 10px;
+}
+
+.print-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 15px;
+}
+
+.print-table th,
+.print-table td {
+  border: 1px solid #999;
+  text-align: center;
+  padding: 8px;
+  height: 25px;
+}
+
+.print-table .mono {
+  font-family: "Courier New", monospace;
+}
+
+.row-printed {
+  background-color: #d0f0d0;
+}
+
+.row-pending {
+  background-color: #fff;
+}
+
+.pagination {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.pagination button {
+  margin: 0 4px;
+  padding: 6px 12px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.page-active {
+  background-color: #4caf50;
+  color: white;
+}
+.row-highlighted {
+  background-color: yellow !important;
+  font-weight: bold;
+  outline: 2px solid orange;
+}
+
+.row-selected {
+  font-weight: bold;
+  background-color: #ffe0e0 !important; /* 선택 강조 배경색 */
+}

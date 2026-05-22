@@ -1,0 +1,75 @@
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap; /* ✅ 여러 줄 방지 */
+  gap: 4px;
+  margin-top: 1.5rem;
+}
+
+.pagination button {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  background-color: white;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 14px;
+  min-width: 36px;
+}
+
+.pagination button:hover:not(:disabled) {
+  background-color: #f0f0f0;
+}
+
+.pagination button.active {
+  background-color: #007bff;
+  color: white;
+  font-weight: bold;
+  border-color: #007bff;
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination .ellipsis {
+  padding: 6px 8px;
+  color: #888;
+  font-size: 14px;
+}
+
+.print-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* 전체 화면 높이 기준 */
+  min-height: 0;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+/* 2. scroll-area가 확실히 남은 공간만큼만 쓰도록 */
+.scroll-area {
+  flex-grow: 1;
+  overflow-y: auto;
+  min-height: 0;
+  margin-bottom: 0.1rem; /* 페이지 버튼과 간격 */
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+/* 3. 페이지 버튼에 여유 공간 확보 */
+.pagination {
+  flex-shrink: 0;
+  padding-top: 0.1rem;
+  background: white;
+}
+
+/* 4. 웹뷰 환경 고려 - body나 html에 추가하면 더 안정적 */
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* 전체 스크롤 방지 */
+}
