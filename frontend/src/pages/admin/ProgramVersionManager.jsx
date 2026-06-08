@@ -3,7 +3,12 @@ import { useEffect, useState } from "react";
 import SERVER_ADDRESS from "../../config";
 import { fetchWithAuth } from "../../utils/fetchWithAuth";
 
-const PROGRAMS = ["FWMonitorTool", "MacWriteToolV2", "LabelPrintToolV2"];
+const PROGRAMS = [
+  "FWMonitorTool",
+  "MacWriteToolV2",
+  "LabelPrintToolV2",
+  "MacCheckTool",
+];
 
 function ProgramVersionManager() {
   const [activeTab, setActiveTab] = useState("upsert");

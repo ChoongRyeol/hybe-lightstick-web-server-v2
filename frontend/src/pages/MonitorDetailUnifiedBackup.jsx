@@ -17,7 +17,7 @@ import dayjs from "dayjs";
 const TABS = [
   { key: "firmware_download", label: "F/W DOWNLOAD" },
   { key: "mac_write", label: "MAC WRITE" },
-  { key: "compare", label: "COMPARE" },
+  { key: "mac_check", label: "MAC CHECK" },
   { key: "device_print", label: "DEVICE PRINT" },
   { key: "giftbox_print", label: "GIFTBOX PRINT" },
   { key: "cartonbox_print", label: "CARTONBOX PRINT" },
@@ -33,8 +33,8 @@ const V2 = {
     list: "/api/backup/monitor/v2/mac-write",
     supportsResult: true,
   },
-  compare: {
-    list: "/api/backup/monitor/v2/compare",
+  mac_check: {
+    list: "/api/backup/monitor/v2/mac-check",
     supportsResult: true,
   },
   device_print: {
@@ -130,7 +130,7 @@ const COLUMNS = {
     "generator_name",
     "device_guid",
   ],
-  compare: [
+  mac_check: [
     "result",
     "line",
     "created_at",
@@ -405,7 +405,7 @@ export default function MonitorDetailUnifiedBackup() {
   const [total, setTotal] = useState(0);
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
-  // ✅ Result 필터(탭별 저장): mac_write, compare만 사용
+  // Result filter is used by mac_write and mac_check.
   const tabMeta = V2[activeTab] || V2.mac_write;
   const resultKey = `result_${activeTab}`;
   const [resultFilter, setResultFilter] = useState(

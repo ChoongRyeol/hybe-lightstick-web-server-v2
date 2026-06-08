@@ -54,7 +54,7 @@ function mapByGenerator(rows, field = "completed") {
 // =========================
 const TABLE_MAP = {
   mac_write: "process_device_test_log",
-  compare: "process_compare_log",
+  mac_check: "process_mac_check_log",
   device_print: "device_label_print_logs",
   giftbox_print: "giftbox_label_print_logs",
   cartonbox_print_logs: "cartonbox_label_print_logs",
@@ -63,7 +63,7 @@ const TABLE_MAP = {
 
 const DATE_COL_MAP = {
   mac_write: "updated_at",
-  compare: "updated_at",
+  mac_check: "updated_at",
   device_print: "updated_at", // 기존 코드가 updated_at 사용중이었음(printed_at면 변경 필요)
   giftbox_print: "updated_at",
   cartonbox_print_logs: "printed_at",
@@ -220,12 +220,12 @@ router.get("/status-summary", async (req, res) => {
     );
 
     // =========================
-    // 4) COMPARE
+    // 4) MAC CHECK
     // =========================
     const [cpCompletedRows] = await replicaPool.query(
       `
       SELECT TRIM(generator_name) AS generator_name, COUNT(*) AS completed
-      FROM process_compare
+      FROM process_mac_check
       WHERE generator_name IS NOT NULL
         AND TRIM(generator_name) <> ''
         AND TRIM(generator_name) IN (${inSql})
@@ -238,7 +238,7 @@ router.get("/status-summary", async (req, res) => {
     const [cpFailRows] = await replicaPool.query(
       `
       SELECT TRIM(generator_name) AS generator_name, COUNT(DISTINCT serial) AS fail
-      FROM process_compare_log
+      FROM process_mac_check_log
       WHERE generator_name IS NOT NULL
         AND TRIM(generator_name) <> ''
         AND TRIM(generator_name) IN (${inSql})
@@ -332,7 +332,7 @@ router.get("/status-summary", async (req, res) => {
           input: mwCompleted + mwFail,
         },
 
-        compare: {
+        mac_check: {
           completed: cpCompleted,
           fail: cpFail,
           input: cpCompleted + cpFail,
@@ -415,7 +415,7 @@ router.get("/daily-process", async (req, res) => {
       replicaPool.query(
         `
         SELECT DATE(updated_at) AS d, COUNT(*) AS completed
-        FROM process_compare
+        FROM process_mac_check
         WHERE generator_name = ? AND updated_at BETWEEN ? AND ?
         GROUP BY DATE(updated_at)
         ORDER BY d ASC
@@ -438,7 +438,7 @@ router.get("/daily-process", async (req, res) => {
       replicaPool.query(
         `
         SELECT DATE(updated_at) AS d, COUNT(DISTINCT serial) AS fail
-        FROM process_compare_log
+        FROM process_mac_check_log
         WHERE generator_name = ?
           AND updated_at BETWEEN ? AND ?
           AND result = 'FAIL'
@@ -519,7 +519,7 @@ router.get("/daily-process", async (req, res) => {
         [generator_name, from, to],
       ),
 
-      // compare last_serial
+      // mac_check last_serial
       replicaPool.query(
         `
         SELECT d, serial AS last_serial
@@ -531,7 +531,7 @@ router.get("/daily-process", async (req, res) => {
               PARTITION BY DATE(updated_at)
               ORDER BY updated_at DESC
             ) AS rn
-          FROM process_compare
+          FROM process_mac_check
           WHERE generator_name = ?
             AND updated_at BETWEEN ? AND ?
             AND serial IS NOT NULL
@@ -635,7 +635,7 @@ router.get("/daily-process", async (req, res) => {
           last_serial: "",
           completed: 0,
         },
-        compare: {
+        mac_check: {
           cumulative: 0,
           input: 0,
           fail: 0,
@@ -678,8 +678,8 @@ router.get("/daily-process", async (req, res) => {
     // numbers
     mergeNumber(mwCompletedDaily, "mac_write", "completed");
     mergeNumber(mwFailDaily, "mac_write", "fail");
-    mergeNumber(cpCompletedDaily, "compare", "completed");
-    mergeNumber(cpFailDaily, "compare", "fail");
+    mergeNumber(cpCompletedDaily, "mac_check", "completed");
+    mergeNumber(cpFailDaily, "mac_check", "fail");
     mergeNumber(deviceDaily, "device_print", "completed");
     mergeNumber(giftboxDaily, "giftbox_print", "completed");
 
@@ -697,7 +697,7 @@ router.get("/daily-process", async (req, res) => {
 
     // last_serial
     mergeLastSerial(mwLastSerialDaily, "mac_write");
-    mergeLastSerial(cpLastSerialDaily, "compare");
+    mergeLastSerial(cpLastSerialDaily, "mac_check");
     mergeLastSerial(deviceLastSerialDaily, "device_print");
     mergeLastSerial(giftboxLastSerialDaily, "giftbox_print");
     mergeLastSerial(cartonLastSerialDaily, "cartonbox_print");
@@ -705,7 +705,7 @@ router.get("/daily-process", async (req, res) => {
     // input 계산 (현재 정책 유지)
     Object.values(mapByDate).forEach((row) => {
       row.mac_write.input = row.mac_write.completed || 0;
-      row.compare.input = row.compare.completed || 0;
+      row.mac_check.input = row.mac_check.completed || 0;
 
       row.device_print.input = row.device_print.completed || 0;
       row.giftbox_print.input = row.giftbox_print.completed || 0;
@@ -724,7 +724,7 @@ router.get("/daily-process", async (req, res) => {
     };
     [
       "mac_write",
-      "compare",
+      "mac_check",
       "device_print",
       "giftbox_print",
       "cartonbox_print",

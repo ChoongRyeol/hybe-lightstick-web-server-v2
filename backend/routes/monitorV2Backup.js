@@ -43,13 +43,13 @@ function parseCommonQuery(req) {
     device_name: s(req.query.device_name),
     user_name: s(req.query.user_name),
 
-    // compare 전용
+    // mac_check 전용
     observed_mac: s(req.query.observed_mac),
 
     // 공통 검색
     q: s(req.query.q),
 
-    // result(PASS/FAIL/OTHER) : mac_write/compare만 사용
+    // result(PASS/FAIL/OTHER) : mac_write/mac_check만 사용
     result: s(req.query.result),
 
     // ✅ CARTONBOX 전용
@@ -94,8 +94,8 @@ const PROC = {
     supportsResult: true,
   },
 
-  compare: {
-    fromSql: "process_compare_log_backup t",
+  "mac-check": {
+    fromSql: "process_mac_check_log_backup t",
     dateCol: "created_at",
     orderCols: ["created_at", "id"],
     likeCols: [
@@ -115,10 +115,11 @@ const PROC = {
       model: false,
       device_name: true,
       user_name: false,
-      observed_mac: false, // observed_mac 컬럼이 없다고 주셨음
+      observed_mac: false,
     },
     supportsResult: true,
   },
+
 
   "device-print": {
     fromSql: "device_label_print_logs_backup t",
@@ -440,9 +441,9 @@ router.get("/v2/mac-write/locate", (req, res) =>
   handleLocate(req, res, "mac-write"),
 );
 
-router.get("/v2/compare", (req, res) => handleList(req, res, "compare"));
-router.get("/v2/compare/locate", (req, res) =>
-  handleLocate(req, res, "compare"),
+router.get("/v2/mac-check", (req, res) => handleList(req, res, "mac-check"));
+router.get("/v2/mac-check/locate", (req, res) =>
+  handleLocate(req, res, "mac-check"),
 );
 
 router.get("/v2/device-print", (req, res) =>

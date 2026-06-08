@@ -1,11 +1,11 @@
-// routes/mac.js
+﻿// routes/mac.js
 const express = require("express");
 const router = express.Router();
 const { dataPool } = require("../db");
 const requireAuth = require("../middleware/auth");
 
 /**
- * 공통 유틸: 숫자 파싱/가드
+ *
  */
 function toInt(v, def, min, max) {
   const n = parseInt(v, 10);
@@ -14,8 +14,8 @@ function toInt(v, def, min, max) {
 }
 
 /**
- * ✅ generator_name 목록 그룹화 조회 (is_hidden=0 기준 최신 row)
- * - (기존 파일에 /groups 라우트가 2번 선언되어 있었는데, 하나로 통합)
+ *
+ *
  */
 router.get("/groups", async (req, res) => {
   try {
@@ -41,17 +41,17 @@ router.get("/groups", async (req, res) => {
       errorCode: 0,
     });
   } catch (err) {
-    console.error("❌ 그룹 목록 조회 오류:", err);
+    console.error("[generated] error:", err);
     return res.status(500).json({
       success: false,
-      message: "서버 오류",
+      message: "Server error",
       errorCode: 500,
     });
   }
 });
 
 /**
- * ✅ generator_name + lightstick 목록
+ * ??generator_name + lightstick 목록
  */
 router.get("/groups/with-lightstick", async (req, res) => {
   try {
@@ -78,19 +78,19 @@ router.get("/groups/with-lightstick", async (req, res) => {
       errorCode: 0,
     });
   } catch (err) {
-    console.error("❌ 그룹 목록 조회 오류:", err);
+    console.error("[generated] error:", err);
     return res.status(500).json({
       success: false,
-      message: "서버 오류",
+      message: "Server error",
       errorCode: 500,
     });
   }
 });
 
 /**
- * ✅ 특정 generator_name의 MAC 목록 조회
- * - 기존 호환 유지: 기본은 전체 반환
- * - 선택 개선: ?limit=xxx 지정 시 상한 적용(운영에서 강력 권장)
+ *
+ *
+ *
  */
 router.get("/", async (req, res) => {
   const { generator_name } = req.query;
@@ -98,13 +98,13 @@ router.get("/", async (req, res) => {
   if (!generator_name) {
     return res.status(400).json({
       success: false,
-      message: "generator_name 쿼리 누락",
+      message: "generator_name query is required",
       data: null,
       errorCode: 1,
     });
   }
 
-  // 선택 파라미터 (기본: 무제한 → 기존 호환)
+
   const limitRaw = req.query.limit;
   const useLimit =
     limitRaw !== undefined &&
@@ -124,7 +124,7 @@ router.get("/", async (req, res) => {
       useLimit ? [generator_name, limit] : [generator_name],
     );
 
-    // ✅ 각 row에 QR_Code와 No 추가
+
     const enriched = rows.map((row, index) => ({
       ...row,
       QR_Code: `${row.lightstick}_${row.mac_address}`,
@@ -138,10 +138,10 @@ router.get("/", async (req, res) => {
       errorCode: 0,
     });
   } catch (err) {
-    console.error("❌ MAC 목록 조회 오류:", err);
+    console.error("[generated] error:", err);
     return res.status(500).json({
       success: false,
-      message: "서버 오류",
+      message: "Server error",
       data: null,
       errorCode: 500,
     });
@@ -149,7 +149,7 @@ router.get("/", async (req, res) => {
 });
 
 /**
- * ✅ generator_name 기준 백업 + 삭제 (트랜잭션)
+ *
  */
 router.post("/backup", requireAuth, async (req, res) => {
   const { generator_name } = req.body;
@@ -157,7 +157,7 @@ router.post("/backup", requireAuth, async (req, res) => {
   if (!generator_name) {
     return res.status(400).json({
       success: false,
-      message: "generator_name 누락",
+      message: "generator_name is required",
       errorCode: 1,
     });
   }
@@ -169,8 +169,10 @@ router.post("/backup", requireAuth, async (req, res) => {
     "giftbox_label_print_logs",
     "process_compare_log",
     "process_device_test_log",
+    "process_mac_check_log",
     "process_compare",
     "process_device_test",
+    "process_mac_check",
     "mac_delete_logs",
     "process_generated_macs",
   ];
@@ -218,23 +220,23 @@ router.post("/backup", requireAuth, async (req, res) => {
 
     return res.json({
       success: true,
-      message: `백업 후 삭제 완료 (백업 ${totalBackedUp}건, 삭제 ${totalDeleted}건)`,
+      message: `Backup and delete completed (backup ${totalBackedUp}, delete ${totalDeleted})`,
       generator_name,
       detail,
       errorCode: 0,
     });
   } catch (err) {
-    console.error("❌ 삭제 + 백업 오류:", err);
+    console.error("[generated] error:", err);
     if (conn) {
       try {
         await conn.rollback();
       } catch (rollbackErr) {
-        console.error("❌ 롤백 중 오류:", rollbackErr);
+        console.error("[generated] error:", rollbackErr);
       }
     }
     return res.status(500).json({
       success: false,
-      message: "서버 오류(삭제 실패)",
+      message: "Server error",
       errorCode: 500,
     });
   } finally {
@@ -247,7 +249,7 @@ router.post("/delete", requireAuth, async (req, res) => {
   if (!generator_name) {
     return res.status(400).json({
       success: false,
-      message: "generator_name 누락",
+      message: "generator_name is required",
       errorCode: 1,
     });
   }
@@ -259,8 +261,10 @@ router.post("/delete", requireAuth, async (req, res) => {
     "giftbox_label_print_logs",
     "process_compare_log",
     "process_device_test_log",
+    "process_mac_check_log",
     "process_compare",
     "process_device_test",
+    "process_mac_check",
     "mac_delete_logs",
     "process_generated_macs",
   ];
@@ -293,23 +297,23 @@ router.post("/delete", requireAuth, async (req, res) => {
 
     return res.json({
       success: true,
-      message: `삭제 완료 (총 ${totalDeleted}건 삭제)`,
+      message: `Delete completed (${totalDeleted})`,
       generator_name,
       detail,
       errorCode: 0,
     });
   } catch (err) {
-    console.error("❌ 삭제 오류:", err);
+    console.error("[generated] error:", err);
     if (conn) {
       try {
         await conn.rollback();
       } catch (rollbackErr) {
-        console.error("❌ 롤백 중 오류:", rollbackErr);
+        console.error("[generated] error:", rollbackErr);
       }
     }
     return res.status(500).json({
       success: false,
-      message: "서버 오류(삭제 실패)",
+      message: "Server error",
       errorCode: 500,
     });
   } finally {
@@ -317,7 +321,7 @@ router.post("/delete", requireAuth, async (req, res) => {
   }
 });
 /**
- * ✅ MAC 단일 조회
+ *
  */
 router.get("/by-mac", async (req, res) => {
   const { mac_address } = req.query;
@@ -325,7 +329,7 @@ router.get("/by-mac", async (req, res) => {
   if (!mac_address) {
     return res.status(400).json({
       success: false,
-      message: "mac_address 쿼리 누락",
+      message: "mac_address query is required",
       data: null,
       errorCode: 1,
     });
@@ -345,7 +349,7 @@ router.get("/by-mac", async (req, res) => {
     if (rows.length === 0) {
       return res.status(404).json({
         success: false,
-        message: "해당 MAC 주소에 대한 정보가 없습니다.",
+        message: "Invalid request",
         data: null,
         errorCode: 404,
       });
@@ -364,10 +368,10 @@ router.get("/by-mac", async (req, res) => {
       errorCode: 0,
     });
   } catch (err) {
-    console.error("❌ MAC 단일 조회 오류:", err);
+    console.error("[generated] error:", err);
     return res.status(500).json({
       success: false,
-      message: "서버 오류",
+      message: "Server error",
       data: null,
       errorCode: 500,
     });
@@ -375,8 +379,8 @@ router.get("/by-mac", async (req, res) => {
 });
 
 /**
- * ✅ 페이징 기반 MAC 목록 조회
- * - page_size 상한(최대 1000) 적용: 서버 보호
+ *
+ *
  */
 router.get("/page", async (req, res) => {
   const { generator_name } = req.query;
@@ -384,7 +388,7 @@ router.get("/page", async (req, res) => {
   if (!generator_name) {
     return res.status(400).json({
       success: false,
-      message: "generator_name 쿼리 누락",
+      message: "generator_name query is required",
       data: null,
       errorCode: 1,
     });
@@ -420,10 +424,10 @@ router.get("/page", async (req, res) => {
       page: currentPage,
     });
   } catch (err) {
-    console.error("❌ 페이징 MAC 목록 조회 오류:", err);
+    console.error("[generated] error:", err);
     return res.status(500).json({
       success: false,
-      message: "서버 오류",
+      message: "Server error",
       data: null,
       errorCode: 500,
     });
@@ -431,7 +435,7 @@ router.get("/page", async (req, res) => {
 });
 
 /**
- * ✅ 특정 lightstick의 마지막 serial 조회
+ *
  */
 router.get("/last-serial", async (req, res) => {
   const { lightstick } = req.query;
@@ -439,7 +443,7 @@ router.get("/last-serial", async (req, res) => {
   if (!lightstick) {
     return res.status(400).json({
       success: false,
-      message: "lightstick 쿼리 누락",
+      message: "lightstick query is required",
       data: null,
       errorCode: 1,
     });
@@ -460,7 +464,7 @@ router.get("/last-serial", async (req, res) => {
     if (rows.length === 0) {
       return res.json({
         success: true,
-        message: "해당 아티스트의 기록이 없습니다.",
+        message: "Invalid request",
         data: null,
         errorCode: 0,
       });
@@ -473,45 +477,45 @@ router.get("/last-serial", async (req, res) => {
       errorCode: 0,
     });
   } catch (err) {
-    console.error("❌ 마지막 시리얼 조회 오류:", err);
+    console.error("[generated] error:", err);
     return res.status(500).json({
       success: false,
-      message: "서버 오류",
+      message: "Server error",
       data: null,
       errorCode: 500,
     });
   }
 });
 
-//start Serial과 count로 시리얼 가져오기
+
 router.post("/by_start_serial", async (req, res) => {
   const { startSerial, count, generator_name } = req.body;
 
-  // ✅ 입력 검증
+
   if (!generator_name || typeof generator_name !== "string") {
     return res
       .status(400)
-      .json({ success: false, message: "generator_name 필요" });
+      .json({ success: false, message: "generator_name is required" });
   }
 
   if (!startSerial || typeof startSerial !== "string") {
     return res
       .status(400)
-      .json({ success: false, message: "startSerial 필요" });
+      .json({ success: false, message: "startSerial is required" });
   }
 
   const n = parseInt(count, 10);
   if (Number.isNaN(n) || n <= 0) {
     return res
       .status(400)
-      .json({ success: false, message: "count는 1 이상의 정수여야 합니다." });
+      .json({ success: false, message: "Invalid request" });
   }
 
-  // ✅ 공정 안전: 과도 요청 제한(클라/서버 동일 상한 추천)
+
   if (n > 5000) {
     return res
       .status(400)
-      .json({ success: false, message: "count 최대 5000개까지 허용" });
+      .json({ success: false, message: "count max is 5000" });
   }
 
   const gen = generator_name.trim();
@@ -551,13 +555,13 @@ router.post("/by_start_serial", async (req, res) => {
 
     return res.json({ success: true, data });
   } catch (err) {
-    console.error("❌ by_start_serial 조회 오류:", err);
-    return res.status(500).json({ success: false, message: "서버 오류" });
+    console.error("[generated] error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 });
 /**
- * ✅ serials 배열로 정보 조회
- * - IN (?) 는 너무 커지면 DB가 급격히 느려질 수 있어 상한 가드 추가
+ *
+ *
  */
 router.post("/by_serials", async (req, res) => {
   const { serials, generator_name } = req.body;
@@ -565,13 +569,13 @@ router.post("/by_serials", async (req, res) => {
   if (!serials || !Array.isArray(serials)) {
     return res
       .status(400)
-      .json({ success: false, message: "serials 배열 필요" });
+      .json({ success: false, message: "serials array is required" });
   }
 
   if (!generator_name || typeof generator_name !== "string") {
     return res
       .status(400)
-      .json({ success: false, message: "generator_name 필요" });
+      .json({ success: false, message: "generator_name is required" });
   }
 
   if (serials.length === 0) return res.json({ success: true, data: [] });
@@ -579,7 +583,7 @@ router.post("/by_serials", async (req, res) => {
   if (serials.length > 5000) {
     return res
       .status(400)
-      .json({ success: false, message: "serials 최대 5000개까지 허용" });
+      .json({ success: false, message: "serials max is 5000" });
   }
 
   try {
@@ -623,25 +627,25 @@ router.post("/by_serials", async (req, res) => {
 
     return res.json({ success: true, data: ordered });
   } catch (err) {
-    console.error("❌ serials 조회 오류:", err);
-    return res.status(500).json({ success: false, message: "서버 오류" });
+    console.error("[generated] error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
 /**
- * ✅ macs 배열로 정보 조회
+ *
  */
 router.post("/by_macs", async (req, res) => {
   const { macs } = req.body;
 
   if (!macs || !Array.isArray(macs)) {
-    return res.status(400).json({ success: false, message: "macs 배열 필요" });
+    return res.status(400).json({ success: false, message: "macs array is required" });
   }
   if (macs.length === 0) return res.json({ success: true, data: [] });
   if (macs.length > 5000) {
     return res
       .status(400)
-      .json({ success: false, message: "macs 최대 5000개까지 허용" });
+      .json({ success: false, message: "macs max is 5000" });
   }
 
   try {
@@ -668,15 +672,15 @@ router.post("/by_macs", async (req, res) => {
       })),
     });
   } catch (err) {
-    console.error("❌ macs 조회 오류:", err);
-    return res.status(500).json({ success: false, message: "서버 오류" });
+    console.error("[generated] error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
 /**
- * ✅ 시리얼 번호로 페이지 계산 (✅ ROW_NUMBER 제거: 성능 개선)
- * - 1) generator_name + serial 로 id/mac 조회
- * - 2) generator_name + id <= targetId COUNT 로 rownum 계산
+ *
+ *
+ *
  * - page = ceil(rownum/pageSize)
  */
 router.get("/find_serial_page", async (req, res) => {
@@ -686,13 +690,13 @@ router.get("/find_serial_page", async (req, res) => {
   if (!generator_name || !serial) {
     return res.status(400).json({
       success: false,
-      message: "generator_name 또는 serial 누락",
+      message: "generator_name or serial is required",
       errorCode: 1,
     });
   }
 
   try {
-    // 1) serial 위치(=id) 찾기
+
     const [[rowSerial]] = await dataPool.query(
       `
       SELECT id, mac_address
@@ -707,14 +711,14 @@ router.get("/find_serial_page", async (req, res) => {
     if (!rowSerial) {
       return res.status(404).json({
         success: false,
-        message: "해당 serial을 찾을 수 없습니다",
+        message: "Invalid request",
         errorCode: 404,
       });
     }
 
     const targetId = rowSerial.id;
 
-    // 2) 해당 id까지의 개수 = rownum
+
     const [[cnt]] = await dataPool.query(
       `
       SELECT COUNT(*) AS rownum
@@ -729,7 +733,7 @@ router.get("/find_serial_page", async (req, res) => {
     if (rownum === 0) {
       return res.status(404).json({
         success: false,
-        message: "해당 serial의 위치를 찾을 수 없습니다",
+        message: "Invalid request",
         errorCode: 404,
       });
     }
@@ -744,17 +748,17 @@ router.get("/find_serial_page", async (req, res) => {
       errorCode: 0,
     });
   } catch (err) {
-    console.error("❌ /api/generated/find_serial_page 오류:", err);
+    console.error("[generated] error:", err);
     return res.status(500).json({
       success: false,
-      message: "서버 오류",
+      message: "Server error",
       errorCode: 500,
     });
   }
 });
 
 /**
- * ✅ MAC으로 페이지 계산
+ *
  */
 router.get("/find_mac_page", async (req, res) => {
   const { generator_name, mac } = req.query;
@@ -763,7 +767,7 @@ router.get("/find_mac_page", async (req, res) => {
   if (!generator_name || !mac) {
     return res.status(400).json({
       success: false,
-      message: "generator_name 또는 mac 누락",
+      message: "generator_name or mac is required",
       errorCode: 1,
     });
   }
@@ -783,7 +787,7 @@ router.get("/find_mac_page", async (req, res) => {
     if (!rowMac) {
       return res.status(404).json({
         success: false,
-        message: "해당 mac을 찾을 수 없습니다",
+        message: "Invalid request",
         errorCode: 404,
       });
     }
@@ -805,7 +809,7 @@ router.get("/find_mac_page", async (req, res) => {
     if (rownum === 0) {
       return res.status(404).json({
         success: false,
-        message: "해당 mac의 위치를 찾을 수 없습니다",
+        message: "Invalid request",
         errorCode: 404,
       });
     }
@@ -820,20 +824,20 @@ router.get("/find_mac_page", async (req, res) => {
       errorCode: 0,
     });
   } catch (err) {
-    console.error("❌ /api/generated/find_mac_page 오류:", err);
+    console.error("[generated] error:", err);
     return res.status(500).json({
       success: false,
-      message: "서버 오류",
+      message: "Server error",
       errorCode: 500,
     });
   }
 });
 
 /**
- * ✅ 생성된 MAC 범위 저장 (/api/generated) - 대용량 대응 버전
- * - 기존 로직 유지
- * - (주의) 중복 확인 쿼리가 매우 무거울 수 있음: IN(?) + LIMIT 1
- *   그래도 전체 호환 유지하되, 운영에서는 macs 크기(예: 10k chunk) 권장
+ *
+ *
+ *
+ *
  */
 router.post("/", requireAuth, async (req, res) => {
   const {
@@ -861,13 +865,13 @@ router.post("/", requireAuth, async (req, res) => {
   ) {
     return res
       .status(400)
-      .json({ success: false, message: "필수 값 누락 또는 잘못된 요청 형식" });
+      .json({ success: false, message: "Invalid request" });
   }
 
   try {
     const macAddresses = macs.map((m) => m.mac);
 
-    // ✅ mac_address 중복 확인 (존재 1개라도 있으면 충돌 처리)
+
     const [existingMacs] = await dataPool.query(
       `SELECT mac_address FROM process_generated_macs WHERE mac_address IN (?) LIMIT 1`,
       [macAddresses],
@@ -876,12 +880,12 @@ router.post("/", requireAuth, async (req, res) => {
     if (existingMacs.length > 0) {
       return res.status(409).json({
         success: false,
-        message: "이미 등록된 MAC 주소가 있습니다.",
+        message: "Invalid request",
         duplicates: existingMacs.map((m) => m.mac_address),
       });
     }
 
-    // ✅ 저장 처리
+
     const chunkSize = 10000;
     let insertCount = 0;
 
@@ -914,17 +918,17 @@ router.post("/", requireAuth, async (req, res) => {
 
     return res.json({
       success: true,
-      message: "✅ 저장 완료",
+      message: "Invalid request",
       count: insertCount,
     });
   } catch (err) {
-    console.error("❌ MAC 저장 오류:", err);
-    return res.status(500).json({ success: false, message: "서버 오류" });
+    console.error("[generated] error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
 /**
- * ✅ generator_name 중복 체크
+ * ??generator_name 중복 체크
  */
 router.get("/check-generator", async (req, res) => {
   const { generator_name } = req.query;
@@ -932,7 +936,7 @@ router.get("/check-generator", async (req, res) => {
   if (!generator_name) {
     return res
       .status(400)
-      .json({ success: false, message: "generator_name이 필요합니다." });
+      .json({ success: false, message: "Invalid request" });
   }
 
   try {
@@ -944,13 +948,13 @@ router.get("/check-generator", async (req, res) => {
     if (rows.length > 0) {
       return res
         .status(409)
-        .json({ success: false, message: "중복된 generator_name입니다." });
+        .json({ success: false, message: "Invalid request" });
     }
 
     return res.json({ success: true });
   } catch (err) {
-    console.error("❌ /check-generator 오류:", err);
-    return res.status(500).json({ success: false, message: "서버 오류" });
+    console.error("[generated] error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
@@ -960,14 +964,14 @@ router.get("/range-summary", async (req, res) => {
   const parsedOffset = page * limit;
 
   try {
-    // 1) 전체 generator_name 개수
+
     const [countRows] = await dataPool.query(`
       SELECT COUNT(DISTINCT generator_name) AS total
       FROM process_generated_macs
     `);
     const totalCount = countRows[0]?.total ?? 0;
 
-    // 2) 페이징 대상 generator_name 목록
+
     const [pageGenerators] = await dataPool.query(
       `
       SELECT generator_name, MAX(created_at) AS last_created_at
@@ -990,21 +994,21 @@ router.get("/range-summary", async (req, res) => {
 
     const generatorNames = pageGenerators.map((g) => g.generator_name);
 
-    // ✅ mac_decimal 변환식(48bit)
+
     const MAC_DEC_SQL = (expr) =>
       `CAST(CONV(REPLACE(${expr}, ':', ''), 16, 10) AS UNSIGNED)`;
 
-    // ✅ serial 숫자부(마지막 숫자 덩어리) 추출식
+
     const SERIAL_NUM_SQL = (expr) =>
       `CAST(REGEXP_SUBSTR(${expr}, '[0-9]+$') AS UNSIGNED)`;
 
     /**
-     * ✅ 목표
-     * - start/end MAC: mac_decimal MIN/MAX에 해당하는 실제 mac 문자열
-     * - expected_count: (max-min+1) "범위상 기대"
-     * - total_count / distinct_count: 실제 row / 유니크
-     * - serial_start/serial_end: "갯수 계산 X" 실제 MIN/MAX serial_num에 해당하는 실제 serial 문자열
-     * - is_continuous: distinct_count == expected_count면 연속(누락 없음)
+     * ??목표
+     *
+     *
+     *
+     *
+     *
      */
     const [rows] = await dataPool.query(
       `
@@ -1052,13 +1056,13 @@ router.get("/range-summary", async (req, res) => {
           ((a.max_dec - a.min_dec + 1) - a.distinct_count) AS missing_count,
           CASE
             WHEN a.distinct_count = (a.max_dec - a.min_dec + 1)
-              THEN '✅ YES'
-            ELSE '❌ NO'
+              THEN '??YES'
+            ELSE '??NO'
           END AS is_continuous
         FROM mac_agg a
       ),
 
-      -- ✅ serial 기반 "실제" start/end 계산 (갯수로 계산 금지)
+
       serial_with_num AS (
         SELECT
           generator_name,
@@ -1119,7 +1123,7 @@ router.get("/range-summary", async (req, res) => {
         mse.start_mac,
         mse.end_mac,
 
-        -- ✅ 기대/실제/유니크 + 중복/누락
+
         mse.expected_count,
         mse.total_count,
         mse.distinct_count,
@@ -1128,7 +1132,7 @@ router.get("/range-summary", async (req, res) => {
 
         mse.is_continuous,
 
-        -- ✅ "실제" 시리얼 start/end
+
         sse.serial_start,
         sse.serial_end,
 
@@ -1148,7 +1152,7 @@ router.get("/range-summary", async (req, res) => {
         ON mse.generator_name = lm.generator_name
       ORDER BY lm.created_at DESC;
       `,
-      // ✅ IN (?) 가 3번이므로 generatorNames 3번 전달
+
       [generatorNames, generatorNames, generatorNames],
     );
 
@@ -1159,10 +1163,10 @@ router.get("/range-summary", async (req, res) => {
       errorCode: 0,
     });
   } catch (err) {
-    console.error("❌ MAC 범위 조회 오류:", err);
+    console.error("[generated] error:", err);
     return res.status(500).json({
       success: false,
-      message: "서버 오류",
+      message: "Server error",
       data: null,
       errorCode: 500,
     });
@@ -1170,7 +1174,7 @@ router.get("/range-summary", async (req, res) => {
 });
 
 /**
- * ✅ 병합
+ * ??병합
  */
 router.post("/merge", requireAuth, async (req, res) => {
   const { source_generators, target_generator, note } = req.body;
@@ -1182,10 +1186,10 @@ router.post("/merge", requireAuth, async (req, res) => {
   ) {
     return res
       .status(400)
-      .json({ success: false, message: "잘못된 요청 형식" });
+      .json({ success: false, message: "Invalid request" });
   }
 
-  // ✅ 정리: trim + 중복 제거
+
   const sources = [
     ...new Set(
       source_generators.map((v) => String(v || "").trim()).filter(Boolean),
@@ -1197,26 +1201,26 @@ router.post("/merge", requireAuth, async (req, res) => {
   if (sources.length < 2 || !target) {
     return res
       .status(400)
-      .json({ success: false, message: "잘못된 요청 형식" });
+      .json({ success: false, message: "Invalid request" });
   }
 
-  // ✅ target이 source에 포함되면 차단
+
   if (sources.includes(target)) {
     return res.status(400).json({
       success: false,
-      message: "대상 generator_name이 source_generators에 포함되어 있습니다.",
+      message: "Invalid request",
     });
   }
 
-  // ✅ 권한 제한(원하면 유지): ADMIN만 병합
-  // requireAuth가 req.user에 role을 세팅한다는 전제
+
+
   const role = String(req.user?.role || "")
     .trim()
     .toUpperCase();
   if (role !== "ADMIN") {
     return res
       .status(403)
-      .json({ success: false, message: "병합 권한이 없습니다." });
+      .json({ success: false, message: "Invalid request" });
   }
 
   const conn = await dataPool.getConnection();
@@ -1224,7 +1228,7 @@ router.post("/merge", requireAuth, async (req, res) => {
   try {
     await conn.beginTransaction();
 
-    // 0️⃣ 실제 병합 대상 존재 확인 + (선택) sources 일부가 누락된 경우 감지
+
     const [[{ cnt }]] = await conn.query(
       `SELECT COUNT(*) AS cnt FROM process_generated_macs WHERE generator_name IN (?)`,
       [sources],
@@ -1234,11 +1238,11 @@ router.post("/merge", requireAuth, async (req, res) => {
       await conn.rollback();
       return res.status(400).json({
         success: false,
-        message: "병합 대상 generator_name이 존재하지 않습니다.",
+        message: "Invalid request",
       });
     }
 
-    // (선택) sources 중 일부가 DB에 아예 없는 경우도 차단하고 싶으면 사용
+
     const [existRows] = await conn.query(
       `SELECT DISTINCT generator_name FROM process_generated_macs WHERE generator_name IN (?)`,
       [sources],
@@ -1249,13 +1253,11 @@ router.post("/merge", requireAuth, async (req, res) => {
       await conn.rollback();
       return res.status(400).json({
         success: false,
-        message: `병합 대상 중 존재하지 않는 generator_name이 있습니다: ${missing.join(
-          ", ",
-        )}`,
+        message: "Invalid request",
       });
     }
 
-    // 1️⃣ artist / lightstick 일관성 검증
+
     const [rows] = await conn.query(
       `
       SELECT DISTINCT artist, lightstick
@@ -1269,11 +1271,11 @@ router.post("/merge", requireAuth, async (req, res) => {
       await conn.rollback();
       return res.status(400).json({
         success: false,
-        message: "다른 아티스트 또는 응원봉은 병합할 수 없습니다.",
+        message: "Invalid request",
       });
     }
 
-    // 2️⃣ 업데이트 대상 테이블 목록
+
     const tables = [
       "process_generated_macs",
       "cartonbox_label_print_exceptions",
@@ -1284,13 +1286,15 @@ router.post("/merge", requireAuth, async (req, res) => {
       "process_compare",
       "process_compare_log",
       "process_device_test",
+      "process_mac_check",
       "process_device_test_log",
+      "process_mac_check_log",
     ];
 
-    // ✅ merged_by: requireAuth 통과했으니 null 허용 대신 명확히 기록
-    const mergedBy = req.user?.id || req.user?.name || null; // 그래도 혹시 미들웨어가 req.user를 안 넣는 경우 대비
 
-    // 2-1️⃣ merge 로그 기록 (UPDATE 전에 기록)
+    const mergedBy = req.user?.id || req.user?.name || null;
+
+
     const [logResult] = await conn.query(
       `
       INSERT INTO generator_merge_logs (target_generator, source_generators, merged_by, note)
@@ -1304,7 +1308,7 @@ router.post("/merge", requireAuth, async (req, res) => {
       ],
     );
 
-    // 3️⃣ 일괄 UPDATE (+ affectedRows 합산)
+
     const affected = {};
     let totalAffected = 0;
 
@@ -1327,7 +1331,7 @@ router.post("/merge", requireAuth, async (req, res) => {
 
     return res.json({
       success: true,
-      message: "병합 완료",
+      message: "Merge completed",
       merged_from: sources,
       merged_to: target,
       merge_log_id: logResult?.insertId ?? null,
@@ -1336,15 +1340,15 @@ router.post("/merge", requireAuth, async (req, res) => {
     });
   } catch (err) {
     await conn.rollback();
-    console.error("❌ 병합 오류:", err);
-    return res.status(500).json({ success: false, message: "서버 오류" });
+    console.error("[generated] error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
   } finally {
     conn.release();
   }
 });
 
 /**
- * ✅ latest 1건 조회
+ *
  */
 router.get("/latest", async (req, res) => {
   const { generator_name } = req.query;
@@ -1370,27 +1374,27 @@ router.get("/latest", async (req, res) => {
     if (rows.length > 0) return res.json({ success: true, data: rows[0] });
     return res.json({ success: false, message: "Not found" });
   } catch (err) {
-    console.error("❌ latest MAC 조회 오류:", err);
+    console.error("[generated] error:", err);
     return res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
 /**
- * ✅ /api/generated/update - 랜덤 MAC 대응 "전체 교체용 최종본" (트랜잭션)
  *
- * 핵심 정책(유지)
- * 1) start/end가 와도 "전체 범위(full range)"면 SPLIT 아님
- *    - old==new  : META_ONLY_PGM (process_generated_macs만 메타 업데이트)
- *    - old!=new  : RENAME (전체 테이블 generator_name 변경)
  *
- * 2) start/end가 "전체 범위가 아니면" SPLIT
- *    - old==new : 400 (SPLIT은 generator_name 변경 필수)
- *    - old!=new : SPLIT 수행(선택 구간 'MAC 범위'의 mac들만 이동)  ✅ 랜덤 대응 핵심
  *
- * 3) generator_name 중복 체크는 old!=new(바꾸려는 경우)에만
  *
- * 4) RENAME에서 "generator_name만 변경"이면 메타 업데이트 금지
- *    - 서버가 oldGen의 현재 메타를 읽어서, 요청 메타가 동일하면 metaChanged=false로 보고 메타 업데이트 스킵
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
 router.post("/update", async (req, res) => {
   const {
@@ -1410,19 +1414,19 @@ router.post("/update", async (req, res) => {
   const newGen = (generator_name ?? "").trim();
 
   if (!oldGen || !newGen) {
-    return res.status(400).json({ success: false, message: "필수 필드 누락" });
+    return res.status(400).json({ success: false, message: "Invalid request" });
   }
 
-  // ---- start/end 정규화 (단일 MAC 보정)
+
   const sRaw = (start_mac ?? "").trim().toUpperCase();
   const eRaw = (end_mac ?? "").trim().toUpperCase();
 
-  // ✅ start/end 금지 (API 직접 호출 방지)
+
   if (sRaw || eRaw) {
     return res.status(400).json({
       success: false,
       code: "RANGE_NOT_ALLOWED",
-      message: "start_mac/end_mac 변경(분리)은 허용되지 않습니다.",
+      message: "Invalid request",
     });
   }
 
@@ -1437,13 +1441,15 @@ router.post("/update", async (req, res) => {
 
   const conn = await dataPool.getConnection();
 
-  // ---- 테이블 화이트리스트
+
   const TABLES_TO_MOVE = [
     "mac_delete_logs",
     "process_compare",
     "process_compare_log",
     "process_device_test",
+    "process_mac_check",
     "process_device_test_log",
+    "process_mac_check_log",
     "cartonbox_label_print_logs",
     "device_label_print_logs",
     "giftbox_label_print_logs",
@@ -1456,11 +1462,11 @@ router.post("/update", async (req, res) => {
     if (!ALLOWED_TABLES.has(table)) throw new Error(`Invalid table: ${table}`);
   }
 
-  // ✅ MAC → UNSIGNED decimal SQL 표현식 (48bit)
+
   const MAC_DEC_SQL = (expr) =>
     `CAST(CONV(REPLACE(${expr}, ':', ''), 16, 10) AS UNSIGNED)`;
 
-  // ---- MAC 포맷 가드(선택)
+
   function normalizeHex(mac) {
     return mac.replace(/:/g, "");
   }
@@ -1498,12 +1504,12 @@ router.post("/update", async (req, res) => {
     );
     if (!row) {
       throw new Error(
-        `입력한 MAC(${mac})이 generator_name=${genName}에 존재하지 않습니다.`,
+        `Input MAC(${mac}) does not exist in generator_name=${genName}.`,
       );
     }
   }
 
-  // ✅ oldGen의 전체 범위(랜덤 기준: MIN/MAX mac_decimal)
+
   async function getGlobalMacDecRange(genName) {
     const [[row]] = await conn.query(
       `
@@ -1519,7 +1525,7 @@ router.post("/update", async (req, res) => {
 
     if (!row || Number(row.cnt) === 0) {
       throw new Error(
-        `generator_name=${genName} 에 해당하는 process_generated_macs 데이터가 없습니다.`,
+        `No process_generated_macs data for generator_name=${genName}.`,
       );
     }
 
@@ -1530,7 +1536,7 @@ router.post("/update", async (req, res) => {
     };
   }
 
-  // ✅ prefix/suffix/all 규칙 검증 (랜덤 대응: decimal 기준)
+
   async function validateSplitRangeByMacDec(oldGenName, selMinDec, selMaxDec) {
     const global = await getGlobalMacDecRange(oldGenName);
 
@@ -1540,13 +1546,12 @@ router.post("/update", async (req, res) => {
 
     if (!(isPrefix || isSuffix || isAll)) {
       throw new Error(
-        `선택 구간이 가운데 형태입니다. ` +
-          `앞쪽(prefix) 또는 뒤쪽(suffix)만 분리 가능합니다. ` +
-          `(A 전체 dec=${global.minDec}~${global.maxDec}, 선택 dec=${selMinDec}~${selMaxDec})`,
+        `Selected range must be prefix or suffix of the whole range. ` +
+          `(whole dec=${global.minDec}~${global.maxDec}, selected dec=${selMinDec}~${selMaxDec})`,
       );
     }
 
-    // ✅ 이동 대상(oldGenName 안에서) 존재 여부
+
     const [[movedRow]] = await conn.query(
       `
       SELECT COUNT(*) AS cnt
@@ -1560,11 +1565,11 @@ router.post("/update", async (req, res) => {
     const movedCnt = Number(movedRow.cnt);
     if (movedCnt <= 0) {
       throw new Error(
-        `분리 불가: 선택 구간 내에 ${oldGenName} 데이터가 없습니다.`,
+        `Cannot split: selected range has no data in ${oldGenName}.`,
       );
     }
 
-    // ✅ 분리 후 남는 데이터 존재 여부(전체 이동 방지)
+
     if (!isAll) {
       const [[remainRow]] = await conn.query(
         `
@@ -1579,7 +1584,7 @@ router.post("/update", async (req, res) => {
       const remainCnt = Number(remainRow.cnt);
       if (remainCnt <= 0) {
         throw new Error(
-          `분리 불가: 분리 후 남는 ${oldGenName} 데이터가 없습니다. (전체 이동)`,
+          `Cannot split: selected range has no data in ${oldGenName}.`,
         );
       }
     }
@@ -1587,7 +1592,7 @@ router.post("/update", async (req, res) => {
     return true;
   }
 
-  // ✅ SPLIT 이동 대상 MAC 목록을 TEMP 테이블로 고정
+
   async function buildTempMoveMacs(oldGenName, selMinDec, selMaxDec) {
     await conn.query(`DROP TEMPORARY TABLE IF EXISTS tmp_move_macs`);
     await conn.query(`
@@ -1610,7 +1615,7 @@ router.post("/update", async (req, res) => {
     return ins?.affectedRows ?? 0;
   }
 
-  // ✅ 관련 테이블 이동: tmp_move_macs 기준으로 generator_name 변경
+
   async function updateGeneratorNameByTmpMacs(table, oldGenName, newGenName) {
     assertAllowedTable(table);
 
@@ -1651,11 +1656,13 @@ router.post("/update", async (req, res) => {
     await updateMetaForGeneratedOnly(genName);
 
     const fwOnlyTables = [
-      "mac_delete_logs", // updated_at 제외
+      "mac_delete_logs",
       "process_compare",
       "process_compare_log",
       "process_device_test",
+      "process_mac_check",
       "process_device_test_log",
+      "process_mac_check_log",
     ];
 
     for (const table of fwOnlyTables) {
@@ -1765,32 +1772,32 @@ router.post("/update", async (req, res) => {
     await conn.beginTransaction();
 
     // =========================
-    // 1) start/end가 있는 경우
-    //    - 랜덤 대응: 선택/전체 범위를 mac_decimal 기준으로 판단 & 이동
+
+
     // =========================
     if (hasRange) {
-      // (A) 입력 MAC이 oldGen에 존재하는지 확인
+
       await ensureMacExistsInGen(oldGen, normStart);
       await ensureMacExistsInGen(oldGen, normEnd);
 
-      // (B) 선택 범위 decimal
+
       const sDec = macToDecBigInt(normStart);
       const eDec = macToDecBigInt(normEnd);
       const selMinDecBI = sDec < eDec ? sDec : eDec;
       const selMaxDecBI = sDec < eDec ? eDec : sDec;
 
-      // 48bit라 Number 변환 안전(2^53 미만)
+
       const selMinDec = Number(selMinDecBI);
       const selMaxDec = Number(selMaxDecBI);
 
-      // (C) oldGen 전체 범위(랜덤 기준)
+
       const global = await getGlobalMacDecRange(oldGen);
       const isFullRange =
         selMinDec === global.minDec && selMaxDec === global.maxDec;
 
-      // ✅ FULL RANGE: SPLIT 아님
+
       if (isFullRange) {
-        // (1) generator_name 변경 없음 → META_ONLY_PGM
+
         if (oldGen === newGen) {
           const pgmAffected = await updateMetaForGeneratedOnly(oldGen);
           await conn.commit();
@@ -1802,13 +1809,13 @@ router.post("/update", async (req, res) => {
           });
         }
 
-        // (2) generator_name 변경 있음 → RENAME
+
         if (await existsGeneratorName(newGen)) {
           await conn.rollback();
           return res.status(400).json({
             success: false,
             code: "GENERATOR_NAME_ALREADY_EXISTS",
-            message: "이미 존재하는 생산명입니다. 다른 생산명을 입력해 주세요.",
+            message: "Invalid request",
           });
         }
 
@@ -1817,7 +1824,7 @@ router.post("/update", async (req, res) => {
 
         const renameAffected = await renameGeneratorEverywhere(oldGen, newGen);
 
-        // generator_name만 변경이면 메타 업데이트 금지
+
         if (metaChanged) {
           await updateMetaForGenerator(newGen);
         }
@@ -1832,15 +1839,14 @@ router.post("/update", async (req, res) => {
       }
 
       // =========================
-      // 2) FULL RANGE가 아니면 → SPLIT (랜덤 대응 핵심)
+
       // =========================
       if (oldGen === newGen) {
         await conn.rollback();
         return res.status(400).json({
           success: false,
           code: "GENERATOR_NAME_REQUIRED_FOR_SPLIT",
-          message:
-            "start/end MAC 범위 분리 작업은 generator_name 변경이 필수입니다. generator_name을 변경한 후 다시 시도해 주세요.",
+          message: "Invalid request",
         });
       }
 
@@ -1849,27 +1855,27 @@ router.post("/update", async (req, res) => {
         return res.status(400).json({
           success: false,
           code: "GENERATOR_NAME_ALREADY_EXISTS",
-          message: "이미 존재하는 생산명입니다. 다른 생산명을 입력해 주세요.",
+          message: "Invalid request",
         });
       }
 
-      // prefix/suffix/all 규칙 유지 (필요 없으면 여기서 완화 가능)
+
       await validateSplitRangeByMacDec(oldGen, selMinDec, selMaxDec);
 
       const targetGen = newGen;
       const affected = {};
 
-      // ✅ (1) 이동 대상 MAC 목록을 TEMP 테이블로 고정
+
       const movedMacRows = await buildTempMoveMacs(
         oldGen,
         selMinDec,
         selMaxDec,
       );
       if (movedMacRows <= 0) {
-        throw new Error("이동 대상 MAC 목록이 비었습니다. (tmp_move_macs=0)");
+        throw new Error("Move target MAC list is empty (tmp_move_macs=0)");
       }
 
-      // ✅ (2) process_generated_macs 이동 (tmp_move_macs 기준)
+
       {
         const [r] = await conn.query(
           `
@@ -1883,7 +1889,7 @@ router.post("/update", async (req, res) => {
         affected.process_generated_macs = r?.affectedRows ?? 0;
       }
 
-      // ✅ (3) 관련 테이블들도 동일 MAC 목록 기준으로 이동
+
       for (const table of TABLES_TO_MOVE) {
         affected[table] = await updateGeneratorNameByTmpMacs(
           table,
@@ -1892,7 +1898,7 @@ router.post("/update", async (req, res) => {
         );
       }
 
-      // SPLIT 후 메타 정책(기존 유지): 양쪽 모두 메타 업데이트
+
       await updateMetaForGenerator(oldGen);
       await updateMetaForGenerator(targetGen);
 
@@ -1914,10 +1920,10 @@ router.post("/update", async (req, res) => {
     }
 
     // =========================
-    // 3) start/end 없는 경우 (기존 정책 유지)
+
     // =========================
 
-    // old==new → process_generated_macs만 메타 업데이트
+
     if (noRange && oldGen === newGen) {
       const pgmAffected = await updateMetaForGeneratedOnly(oldGen);
       await conn.commit();
@@ -1929,14 +1935,14 @@ router.post("/update", async (req, res) => {
       });
     }
 
-    // old!=new → RENAME (전체 테이블 generator_name 변경)
+
     if (noRange && oldGen !== newGen) {
       if (await existsGeneratorName(newGen)) {
         await conn.rollback();
         return res.status(400).json({
           success: false,
           code: "GENERATOR_NAME_ALREADY_EXISTS",
-          message: "이미 존재하는 생산명입니다. 다른 생산명을 입력해 주세요.",
+          message: "Invalid request",
         });
       }
 
@@ -1961,10 +1967,10 @@ router.post("/update", async (req, res) => {
     await conn.rollback();
     return res
       .status(400)
-      .json({ success: false, message: "요청 상태가 올바르지 않습니다." });
+      .json({ success: false, message: "Invalid request" });
   } catch (err) {
     await conn.rollback();
-    console.error("❌ generator_name 업데이트 실패:", err);
+    console.error("[generated] error:", err);
     return res.status(500).json({ success: false, message: err.message });
   } finally {
     conn.release();
@@ -1984,31 +1990,33 @@ router.post("/split", async (req, res) => {
     return res.status(400).json({
       success: false,
       code: "REQUIRED",
-      message: "source_generator / target_generator는 필수입니다.",
+      message: "Invalid request",
     });
   }
   if (!sRaw || !eRaw) {
     return res.status(400).json({
       success: false,
       code: "REQUIRED",
-      message: "serial_start / serial_end는 필수입니다.",
+      message: "Invalid request",
     });
   }
   if (oldGen === newGen) {
     return res.status(400).json({
       success: false,
       code: "SAME_NAME",
-      message: "target_generator는 source_generator와 달라야 합니다.",
+      message: "Invalid request",
     });
   }
 
-  // ---- 테이블 화이트리스트 (update와 동일)
+
   const TABLES_TO_MOVE = [
     "mac_delete_logs",
     "process_compare",
     "process_compare_log",
     "process_device_test",
+    "process_mac_check",
     "process_device_test_log",
+    "process_mac_check_log",
     "cartonbox_label_print_logs",
     "device_label_print_logs",
     "giftbox_label_print_logs",
@@ -2020,12 +2028,12 @@ router.post("/split", async (req, res) => {
     if (!ALLOWED_TABLES.has(table)) throw new Error(`Invalid table: ${table}`);
   }
 
-  // ✅ serial 입력이 "ABS4-0000001" 같은 full 이든, "1" 같은 숫자만이든 처리
-  // - full이면: prefix/width를 그대로 사용
-  // - 숫자만이면: prefix는 source generator에서 대표 serial 1개를 읽어서 가져옴
+
+
+
   function parseSerialInput(v) {
     const s = String(v ?? "").trim();
-    // full 형태: 끝에 숫자 덩어리
+
     const m = s.match(/^(.*?)(\d+)$/);
     if (m) {
       return {
@@ -2036,7 +2044,7 @@ router.post("/split", async (req, res) => {
         isFull: true,
       };
     }
-    // 숫자만 케이스
+
     if (/^\d+$/.test(s)) {
       return {
         prefix: null,
@@ -2061,8 +2069,7 @@ router.post("/split", async (req, res) => {
     return res.status(400).json({
       success: false,
       code: "BAD_SERIAL",
-      message:
-        "serial_start/serial_end 형식이 올바르지 않습니다. (예: ABS4-0000001 또는 1)",
+      message: "Invalid request",
     });
   }
 
@@ -2076,7 +2083,7 @@ router.post("/split", async (req, res) => {
     return !!row;
   }
 
-  // ✅ source generator에서 대표 serial 1개를 가져와 prefix/width 확보
+
   async function getSampleSerialMeta(genName) {
     const [[row]] = await conn.query(
       `
@@ -2098,12 +2105,12 @@ router.post("/split", async (req, res) => {
     return { prefix: m[1], width: m[2].length };
   }
 
-  // ✅ serial 숫자부 추출 (MariaDB) : 끝 숫자만 뽑아 UNSIGNED로 변환
-  // - MariaDB 10.0+ REGEXP_SUBSTR 지원 (대부분 OK)
+
+
   const SERIAL_NUM_SQL = (col) =>
     `CAST(REGEXP_SUBSTR(${col}, '[0-9]+$') AS UNSIGNED)`;
 
-  // ✅ SPLIT 이동 대상 MAC 목록을 TEMP 테이블로 고정 (update와 동일 패턴)
+
   async function buildTempMoveMacsBySerialRange(
     oldGenName,
     prefix,
@@ -2117,7 +2124,7 @@ router.post("/split", async (req, res) => {
       ) ENGINE=MEMORY
     `);
 
-    // prefix가 있으면 LIKE로 좁히고, 숫자부 범위로 필터
+
     const likePrefix = prefix ? `${prefix}%` : null;
 
     const [ins] = await conn.query(
@@ -2156,23 +2163,23 @@ router.post("/split", async (req, res) => {
   try {
     await conn.beginTransaction();
 
-    // ✅ target 이미 존재하면 SPLIT 불가 (기존 정책 유지)
+
     if (await existsGeneratorName(newGen)) {
       await conn.rollback();
       return res.status(400).json({
         success: false,
         code: "GENERATOR_NAME_ALREADY_EXISTS",
-        message: "이미 존재하는 생산명입니다. 다른 생산명을 입력해 주세요.",
+        message: "Invalid request",
       });
     }
 
-    // ✅ 숫자 범위 정규화
+
     const minN = Math.min(sParsed.num, eParsed.num);
     const maxN = Math.max(sParsed.num, eParsed.num);
 
-    // ✅ prefix 결정
-    // - 둘 다 full이면 prefix가 서로 달라지면 에러
-    // - 하나라도 숫자만이면 source generator 샘플 serial에서 prefix를 가져옴
+    // ??prefix 결정
+
+
     let prefix = null;
     let width = null;
 
@@ -2182,11 +2189,11 @@ router.post("/split", async (req, res) => {
         return res.status(400).json({
           success: false,
           code: "PREFIX_MISMATCH",
-          message: `serial_start/serial_end의 prefix가 다릅니다. (${sParsed.prefix} vs ${eParsed.prefix})`,
+          message: "Invalid request",
         });
       }
       prefix = sParsed.prefix;
-      width = sParsed.width; // 참고용
+      width = sParsed.width; // 참고??
     } else {
       const meta = await getSampleSerialMeta(oldGen);
       if (!meta) {
@@ -2194,14 +2201,14 @@ router.post("/split", async (req, res) => {
         return res.status(400).json({
           success: false,
           code: "NO_SERIAL_META",
-          message: `source generator(${oldGen})에서 serial prefix 정보를 찾을 수 없습니다. full serial로 입력해 주세요.`,
+          message: "Invalid request",
         });
       }
       prefix = meta.prefix;
       width = meta.width;
     }
 
-    // ✅ (1) 이동 대상 MAC 목록 생성
+
     const movedMacRows = await buildTempMoveMacsBySerialRange(
       oldGen,
       prefix,
@@ -2213,11 +2220,11 @@ router.post("/split", async (req, res) => {
       return res.status(400).json({
         success: false,
         code: "NOTHING_TO_MOVE",
-        message: `분리 불가: ${oldGen}에서 serial 숫자부 ${minN}~${maxN} 범위에 해당하는 데이터가 없습니다.`,
+        message: "Invalid request",
       });
     }
 
-    // ✅ (2) 전체 이동 방지 (원하면 해제 가능)
+
     const [[remainRow]] = await conn.query(
       `
       SELECT COUNT(*) AS cnt
@@ -2233,12 +2240,11 @@ router.post("/split", async (req, res) => {
       return res.status(400).json({
         success: false,
         code: "MOVE_ALL_NOT_ALLOWED",
-        message:
-          "분리 불가: 선택 범위가 전체를 포함합니다. (이 경우 rename/update로 처리하세요)",
+        message: "Invalid request",
       });
     }
 
-    // ✅ (3) process_generated_macs 이동
+
     const affected = {};
     {
       const [r] = await conn.query(
@@ -2253,7 +2259,7 @@ router.post("/split", async (req, res) => {
       affected.process_generated_macs = r?.affectedRows ?? 0;
     }
 
-    // ✅ (4) 관련 테이블들 이동 (전부 동일하게 generator_name 바꿈)
+
     for (const table of TABLES_TO_MOVE) {
       affected[table] = await updateGeneratorNameByTmpMacs(
         table,
@@ -2278,24 +2284,24 @@ router.post("/split", async (req, res) => {
     });
   } catch (err) {
     await conn.rollback();
-    console.error("❌ /api/generated/split 실패:", err);
+    console.error("[generated] error:", err);
     return res.status(500).json({
       success: false,
-      message: err.message || "서버 오류",
+      message: err.message || "Server error",
     });
   } finally {
     conn.release();
   }
 });
 /**
- * ✅ 숨김/보임
+ *
  */
 router.post("/hide", async (req, res) => {
   const { generator_names } = req.body;
   if (!Array.isArray(generator_names) || generator_names.length === 0) {
     return res.json({
       success: false,
-      message: "generator_names 값이 없습니다.",
+      message: "generator_names is required",
     });
   }
 
@@ -2304,7 +2310,7 @@ router.post("/hide", async (req, res) => {
     await dataPool.query(sql, [generator_names]);
     return res.json({ success: true });
   } catch (err) {
-    console.error("❌ 숨기기 오류:", err);
+    console.error("[generated] error:", err);
     return res.json({ success: false, message: err.message });
   }
 });
@@ -2314,7 +2320,7 @@ router.post("/show", async (req, res) => {
   if (!Array.isArray(generator_names) || generator_names.length === 0) {
     return res.json({
       success: false,
-      message: "generator_names 값이 없습니다.",
+      message: "generator_names is required",
     });
   }
 
@@ -2323,7 +2329,7 @@ router.post("/show", async (req, res) => {
     await dataPool.query(sql, [generator_names]);
     return res.json({ success: true });
   } catch (err) {
-    console.error("❌ 보이기 오류:", err);
+    console.error("[generated] error:", err);
     return res.json({ success: false, message: err.message });
   }
 });

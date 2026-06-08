@@ -108,8 +108,8 @@ const PROC = {
     supportsResult: true,
   },
 
-  compare: {
-    fromSql: "process_compare_log t",
+  "mac-check": {
+    fromSql: "process_mac_check_log t",
     dateCol: "created_at",
     orderCols: ["created_at", "id"],
     likeCols: [
@@ -371,7 +371,7 @@ function buildSelectSql(key) {
     `;
   }
 
-  if (key === "mac-write") {
+  if (key === "mac-write" || key === "mac-check") {
     return `
       SELECT
         t.*,
@@ -536,10 +536,10 @@ router.get("/v2/mac-write/locate", (req, res) =>
   handleLocate(req, res, "mac-write"),
 );
 
-router.get("/v2/compare", (req, res) => handleList(req, res, "compare"));
+router.get("/v2/mac-check", (req, res) => handleList(req, res, "mac-check"));
 
-router.get("/v2/compare/locate", (req, res) =>
-  handleLocate(req, res, "compare"),
+router.get("/v2/mac-check/locate", (req, res) =>
+  handleLocate(req, res, "mac-check"),
 );
 
 router.get("/v2/device-print", (req, res) =>

@@ -30,6 +30,7 @@ const monitorV2BackupRoutes = require("./routes/monitorV2Backup");
 const exportRoutes = require("./routes/export");
 const firmwareDownloadRoutes = require("./routes/processFirmwareDownload");
 const processDeviceRoutes = require("./routes/processDevice");
+const macCheckRoutes = require("./routes/macCheck");
 
 const backupAndCleanLoginLogs = require("./backup/backupLoginLogs");
 const backupMacDeleteLogs = require("./backup/backupMacDeleteLogs");
@@ -153,6 +154,7 @@ function getLocalIPAddress() {
   app.use("/api", iniReader);
   app.use("/api/firmware-download", firmwareDownloadRoutes);
   app.use("/api/process-device", processDeviceRoutes);
+  app.use("/api/mac-check", macCheckRoutes);
   // ✅ updates는 SPA보다 먼저 + fallthrough 차단
   app.use(
     "/updates",

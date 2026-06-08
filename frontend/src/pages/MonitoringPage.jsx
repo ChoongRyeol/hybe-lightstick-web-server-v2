@@ -220,14 +220,13 @@ const MonitoringSummaryCard = memo(function MonitoringSummaryCard({
 }) {
   const FW = item.firmware_download || {};
   const MW = item.mac_write || {};
-  const CP = item.compare || {};
+  const CP = item.mac_check || {};
   const DP = item.device_print || {};
   const GB = item.giftbox_print || {};
   const CB = item.cartonbox_print || {};
 
   const failFw = Number(FW.fail || 0);
   const failMw = Number(MW.fail || MW.fail_only_unwritten || 0);
-  const failCp = Number(CP.fail || CP.fail_only_unwritten || 0);
 
   return (
     <div
@@ -274,11 +273,6 @@ const MonitoringSummaryCard = memo(function MonitoringSummaryCard({
               borderColor: "#b55",
             })}
           {failMw > 0 && badge(`MW FAIL ${failMw}`, "MAC WRITE 실패 수")} */}
-          {failCp > 0 &&
-            badge(`CP FAIL ${failCp}`, "MAC CHECK 실패 수", {
-              backgroundColor: "#402b1b",
-              borderColor: "#a46a2c",
-            })}
         </h3>
 
         <button
@@ -571,7 +565,7 @@ function MonitoringPage() {
     if (q) {
       [
         "mac_write",
-        "compare",
+        "mac_check",
         "device_print",
         "giftbox_print",
         "cartonbox_print",
@@ -1092,7 +1086,7 @@ const DailyRow = ({ row, idx }) => {
   };
   const dp = cells("device_print");
   const mw = cells("mac_write");
-  const cp = cells("compare");
+  const cp = cells("mac_check");
   const gb = cells("giftbox_print");
   const cbBase = cells("cartonbox_print");
   const cbRaw = row?.cartonbox_print || {};

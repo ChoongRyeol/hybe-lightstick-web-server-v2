@@ -26,8 +26,49 @@ function toInt(v, def = 50, min = 1, max = 500) {
   return Math.min(max, Math.max(min, n));
 }
 
+function isMissingTableError(err) {
+  return err?.code === "ER_NO_SUCH_TABLE" || err?.errno === 1146;
+}
+
+const missingReplicaTables = new Set();
+
+async function safeReplicaRows(sql, params = [], label = "") {
+  if (label && missingReplicaTables.has(label)) return [];
+
+  try {
+    const [rows] = await replicaPool.query(sql, params);
+    return rows;
+  } catch (err) {
+    if (isMissingTableError(err)) {
+      if (label) missingReplicaTables.add(label);
+      return [];
+    }
+    throw err;
+  }
+}
+
+async function safeReplicaFirst(sql, params = [], label = "") {
+  const rows = await safeReplicaRows(sql, params, label);
+  return rows[0] || {};
+}
+
+async function safeReplicaExecute(conn, sql, params = [], label = "") {
+  if (label && missingReplicaTables.has(label)) return { affectedRows: 0 };
+
+  try {
+    const [result] = await conn.query(sql, params);
+    return result;
+  } catch (err) {
+    if (isMissingTableError(err)) {
+      if (label) missingReplicaTables.add(label);
+      return { affectedRows: 0 };
+    }
+    throw err;
+  }
+}
+
 async function getCartonboxCompletedMap(from, to) {
-  const [logs] = await replicaPool.query(
+  const logs = await safeReplicaRows(
     `
     SELECT generator_name, COUNT(*) AS completed
     FROM cartonbox_label_print_logs_backup
@@ -35,6 +76,7 @@ async function getCartonboxCompletedMap(from, to) {
     GROUP BY generator_name
     `,
     [from, to],
+    "cartonbox_label_print_logs_backup",
   );
 
   const map = new Map();
@@ -55,7 +97,7 @@ function mapByGenerator(rows, field = "completed") {
 // =========================
 const TABLE_MAP = {
   mac_write: "process_device_test_log_backup",
-  compare: "process_compare_log_backup",
+  mac_check: "process_mac_check_log_backup",
   device_print: "device_label_print_logs_backup",
   giftbox_print: "giftbox_label_print_logs_backup",
   cartonbox_print_logs: "cartonbox_label_print_logs_backup",
@@ -64,7 +106,7 @@ const TABLE_MAP = {
 
 const DATE_COL_MAP = {
   mac_write: "updated_at",
-  compare: "updated_at",
+  mac_check: "updated_at",
   device_print: "updated_at", // 기존 코드가 updated_at 사용중이었음(printed_at면 변경 필요)
   giftbox_print: "updated_at",
   cartonbox_print_logs: "printed_at",
@@ -81,7 +123,7 @@ router.get("/status-summary", async (req, res) => {
     // =========================
     // 0) F/W Download 전체 요약
     // =========================
-    const [[fwWaitingRow]] = await replicaPool.query(
+    const fwWaitingRow = await safeReplicaFirst(
       `
       SELECT COUNT(*) AS waiting
       FROM process_firmware_download_backup
@@ -89,9 +131,10 @@ router.get("/status-summary", async (req, res) => {
         AND updated_at BETWEEN ? AND ?
       `,
       [from, to],
+      "process_firmware_download_backup",
     );
 
-    const [[fwFailOverviewRow]] = await replicaPool.query(
+    const fwFailOverviewRow = await safeReplicaFirst(
       `
       SELECT COUNT(DISTINCT serial) AS fail
       FROM process_firmware_download_log_backup
@@ -100,6 +143,7 @@ router.get("/status-summary", async (req, res) => {
         AND serial IS NOT NULL
       `,
       [from, to],
+      "process_firmware_download_log_backup",
     );
 
     const fwOverview = {
@@ -110,36 +154,61 @@ router.get("/status-summary", async (req, res) => {
     // =========================
     // 1) generator 목록
     // =========================
-    const [generators] = await replicaPool.query(
+    const generatedGenerators = await safeReplicaRows(
       `
       SELECT
-        generator_name,
-        SUM(total) AS total,
-        MAX(last_updated) AS last_updated
-      FROM (
-        SELECT
-          TRIM(generator_name) AS generator_name,
-          COUNT(*) AS total,
-          MAX(updated_at) AS last_updated
-        FROM process_generated_macs_backup
-        WHERE generator_name IS NOT NULL
-          AND TRIM(generator_name) <> ''
-        GROUP BY TRIM(generator_name)
-
-        UNION ALL
-
-        SELECT
-          TRIM(generator_name) AS generator_name,
-          0 AS total,
-          MAX(updated_at) AS last_updated
-        FROM process_firmware_download_backup
-        WHERE generator_name IS NOT NULL
-          AND TRIM(generator_name) <> ''
-        GROUP BY TRIM(generator_name)
-      ) x
-      GROUP BY generator_name
-      ORDER BY last_updated DESC
+        TRIM(generator_name) AS generator_name,
+        COUNT(*) AS total,
+        MAX(updated_at) AS last_updated
+      FROM process_generated_macs_backup
+      WHERE generator_name IS NOT NULL
+        AND TRIM(generator_name) <> ''
+      GROUP BY TRIM(generator_name)
       `,
+      [],
+      "process_generated_macs_backup",
+    );
+
+    const firmwareGenerators = await safeReplicaRows(
+      `
+      SELECT
+        TRIM(generator_name) AS generator_name,
+        0 AS total,
+        MAX(updated_at) AS last_updated
+      FROM process_firmware_download_backup
+      WHERE generator_name IS NOT NULL
+        AND TRIM(generator_name) <> ''
+      GROUP BY TRIM(generator_name)
+      `,
+      [],
+      "process_firmware_download_backup",
+    );
+
+    const generatorMap = new Map();
+    for (const row of [...generatedGenerators, ...firmwareGenerators]) {
+      const generatorName = String(row.generator_name || "").trim();
+      if (!generatorName) continue;
+
+      const prev = generatorMap.get(generatorName) || {
+        generator_name: generatorName,
+        total: 0,
+        last_updated: null,
+      };
+
+      prev.total += Number(row.total || 0);
+      if (
+        row.last_updated &&
+        (!prev.last_updated ||
+          new Date(row.last_updated).getTime() >
+            new Date(prev.last_updated).getTime())
+      ) {
+        prev.last_updated = row.last_updated;
+      }
+      generatorMap.set(generatorName, prev);
+    }
+
+    const generators = Array.from(generatorMap.values()).sort(
+      (a, b) => new Date(b.last_updated || 0) - new Date(a.last_updated || 0),
     );
 
     const generatorNames = generators
@@ -159,7 +228,7 @@ router.get("/status-summary", async (req, res) => {
     // =========================
     // 2) F/W DOWNLOAD
     // =========================
-    const [fwCompletedRows] = await replicaPool.query(
+    const fwCompletedRows = await safeReplicaRows(
       `
       SELECT
         TRIM(generator_name) AS generator_name,
@@ -171,14 +240,15 @@ router.get("/status-summary", async (req, res) => {
       GROUP BY TRIM(generator_name)
       `,
       [from, to],
+      "process_firmware_download_backup",
     );
 
-    const [fwFailRows] = await replicaPool.query(
+    const fwFailRows = await safeReplicaRows(
       `
       SELECT
         TRIM(generator_name) AS generator_name,
         COUNT(DISTINCT serial) AS fail
-      FROM process_firmware_download_log
+      FROM process_firmware_download_log_backup
       WHERE generator_name IS NOT NULL
         AND TRIM(generator_name) <> ''
         AND created_at BETWEEN ? AND ?
@@ -187,12 +257,13 @@ router.get("/status-summary", async (req, res) => {
       GROUP BY TRIM(generator_name)
       `,
       [from, to],
+      "process_firmware_download_log_backup",
     );
 
     // =========================
     // 3) MAC WRITE
     // =========================
-    const [mwCompletedRows] = await replicaPool.query(
+    const mwCompletedRows = await safeReplicaRows(
       `
       SELECT TRIM(generator_name) AS generator_name, COUNT(*) AS completed
       FROM process_device_test_backup
@@ -203,9 +274,10 @@ router.get("/status-summary", async (req, res) => {
       GROUP BY TRIM(generator_name)
       `,
       [...generatorNames, from, to],
+      "process_device_test_backup",
     );
 
-    const [mwFailRows] = await replicaPool.query(
+    const mwFailRows = await safeReplicaRows(
       `
       SELECT TRIM(generator_name) AS generator_name, COUNT(DISTINCT serial) AS fail
       FROM process_device_test_log_backup
@@ -218,15 +290,16 @@ router.get("/status-summary", async (req, res) => {
       GROUP BY TRIM(generator_name)
       `,
       [...generatorNames, from, to],
+      "process_device_test_log_backup",
     );
 
     // =========================
-    // 4) COMPARE
+    // 4) MAC CHECK
     // =========================
-    const [cpCompletedRows] = await replicaPool.query(
+    const cpCompletedRows = await safeReplicaRows(
       `
       SELECT TRIM(generator_name) AS generator_name, COUNT(*) AS completed
-      FROM process_compare_backup
+      FROM process_mac_check_backup
       WHERE generator_name IS NOT NULL
         AND TRIM(generator_name) <> ''
         AND TRIM(generator_name) IN (${inSql})
@@ -234,12 +307,13 @@ router.get("/status-summary", async (req, res) => {
       GROUP BY TRIM(generator_name)
       `,
       [...generatorNames, from, to],
+      "process_mac_check_backup",
     );
 
-    const [cpFailRows] = await replicaPool.query(
+    const cpFailRows = await safeReplicaRows(
       `
       SELECT TRIM(generator_name) AS generator_name, COUNT(DISTINCT serial) AS fail
-      FROM process_compare_log_backup
+      FROM process_mac_check_log_backup
       WHERE generator_name IS NOT NULL
         AND TRIM(generator_name) <> ''
         AND TRIM(generator_name) IN (${inSql})
@@ -249,12 +323,13 @@ router.get("/status-summary", async (req, res) => {
       GROUP BY TRIM(generator_name)
       `,
       [...generatorNames, from, to],
+      "process_mac_check_log_backup",
     );
 
     // =========================
     // 5) LABEL PRINT
     // =========================
-    const [dpRows] = await replicaPool.query(
+    const dpRows = await safeReplicaRows(
       `
       SELECT TRIM(generator_name) AS generator_name, COUNT(*) AS completed
       FROM device_label_print_logs_backup
@@ -265,9 +340,10 @@ router.get("/status-summary", async (req, res) => {
       GROUP BY TRIM(generator_name)
       `,
       [...generatorNames, from, to],
+      "device_label_print_logs_backup",
     );
 
-    const [gbRows] = await replicaPool.query(
+    const gbRows = await safeReplicaRows(
       `
       SELECT TRIM(generator_name) AS generator_name, COUNT(*) AS completed
       FROM giftbox_label_print_logs_backup
@@ -278,6 +354,7 @@ router.get("/status-summary", async (req, res) => {
       GROUP BY TRIM(generator_name)
       `,
       [...generatorNames, from, to],
+      "giftbox_label_print_logs_backup",
     );
 
     const cartonboxMap = await getCartonboxCompletedMap(from, to);
@@ -333,7 +410,7 @@ router.get("/status-summary", async (req, res) => {
           input: mwCompleted + mwFail,
         },
 
-        compare: {
+        mac_check: {
           completed: cpCompleted,
           fail: cpFail,
           input: cpCompleted + cpFail,
@@ -384,26 +461,26 @@ router.get("/daily-process", async (req, res) => {
     // (단, WHERE에서 DATE(col) 쓰면 인덱스 죽으니 절대 금지)
 
     const [
-      [mwCompletedDaily],
-      [cpCompletedDaily],
-      [mwFailDaily],
-      [cpFailDaily],
-      [deviceDaily],
-      [giftboxDaily],
-      [cartonLogsDaily],
-      [cartonExpsDaily],
+      mwCompletedDaily,
+      cpCompletedDaily,
+      mwFailDaily,
+      cpFailDaily,
+      deviceDaily,
+      giftboxDaily,
+      cartonLogsDaily,
+      cartonExpsDaily,
 
       // ✅ last_serial (날짜별 최종 시리얼)
-      [mwLastSerialDaily],
-      [cpLastSerialDaily],
-      [deviceLastSerialDaily],
-      [giftboxLastSerialDaily],
-      [cartonLastSerialDaily],
+      mwLastSerialDaily,
+      cpLastSerialDaily,
+      deviceLastSerialDaily,
+      giftboxLastSerialDaily,
+      cartonLastSerialDaily,
     ] = await Promise.all([
       // =======================
       // 1) completed/fail
       // =======================
-      replicaPool.query(
+      safeReplicaRows(
         `
         SELECT DATE(updated_at) AS d, COUNT(*) AS completed
         FROM process_device_test_backup
@@ -412,18 +489,20 @@ router.get("/daily-process", async (req, res) => {
         ORDER BY d ASC
         `,
         [generator_name, from, to],
+        "process_device_test_backup",
       ),
-      replicaPool.query(
+      safeReplicaRows(
         `
         SELECT DATE(updated_at) AS d, COUNT(*) AS completed
-        FROM process_compare_backup
+        FROM process_mac_check_backup
         WHERE generator_name = ? AND updated_at BETWEEN ? AND ?
         GROUP BY DATE(updated_at)
         ORDER BY d ASC
         `,
         [generator_name, from, to],
+        "process_mac_check_backup",
       ),
-      replicaPool.query(
+      safeReplicaRows(
         `
         SELECT DATE(updated_at) AS d, COUNT(DISTINCT serial) AS fail
         FROM process_device_test_log_backup
@@ -435,11 +514,12 @@ router.get("/daily-process", async (req, res) => {
         ORDER BY d ASC
         `,
         [generator_name, from, to],
+        "process_device_test_log_backup",
       ),
-      replicaPool.query(
+      safeReplicaRows(
         `
         SELECT DATE(updated_at) AS d, COUNT(DISTINCT serial) AS fail
-        FROM process_compare_log_backup
+        FROM process_mac_check_log_backup
         WHERE generator_name = ?
           AND updated_at BETWEEN ? AND ?
           AND result = 'FAIL'
@@ -448,8 +528,9 @@ router.get("/daily-process", async (req, res) => {
         ORDER BY d ASC
         `,
         [generator_name, from, to],
+        "process_mac_check_log_backup",
       ),
-      replicaPool.query(
+      safeReplicaRows(
         `
         SELECT DATE(updated_at) AS d, COUNT(*) AS completed
         FROM device_label_print_logs_backup
@@ -458,8 +539,9 @@ router.get("/daily-process", async (req, res) => {
         ORDER BY d ASC
         `,
         [generator_name, from, to],
+        "device_label_print_logs_backup",
       ),
-      replicaPool.query(
+      safeReplicaRows(
         `
         SELECT DATE(updated_at) AS d, COUNT(*) AS completed
         FROM giftbox_label_print_logs_backup
@@ -468,8 +550,9 @@ router.get("/daily-process", async (req, res) => {
         ORDER BY d ASC
         `,
         [generator_name, from, to],
+        "giftbox_label_print_logs_backup",
       ),
-      replicaPool.query(
+      safeReplicaRows(
         `
         SELECT DATE(printed_at) AS d, COUNT(*) AS completed
         FROM cartonbox_label_print_logs_backup
@@ -478,10 +561,11 @@ router.get("/daily-process", async (req, res) => {
         ORDER BY d ASC
         `,
         [generator_name, from, to],
+        "cartonbox_label_print_logs_backup",
       ),
 
       // ✅ 예외는 completed 아님 → exceptions로 별도
-      replicaPool.query(
+      safeReplicaRows(
         `
         SELECT DATE(created_at) AS d, COUNT(*) AS exceptions
         FROM cartonbox_label_print_exceptions_backup
@@ -490,6 +574,7 @@ router.get("/daily-process", async (req, res) => {
         ORDER BY d ASC
         `,
         [generator_name, from, to],
+        "cartonbox_label_print_exceptions_backup",
       ),
 
       // =======================
@@ -497,7 +582,7 @@ router.get("/daily-process", async (req, res) => {
       // =======================
 
       // mac_write last_serial
-      replicaPool.query(
+      safeReplicaRows(
         `
         SELECT d, serial AS last_serial
         FROM (
@@ -518,10 +603,11 @@ router.get("/daily-process", async (req, res) => {
         ORDER BY d ASC
         `,
         [generator_name, from, to],
+        "process_device_test_backup",
       ),
 
-      // compare last_serial
-      replicaPool.query(
+      // mac_check last_serial
+      safeReplicaRows(
         `
         SELECT d, serial AS last_serial
         FROM (
@@ -532,7 +618,7 @@ router.get("/daily-process", async (req, res) => {
               PARTITION BY DATE(updated_at)
               ORDER BY updated_at DESC
             ) AS rn
-          FROM process_compare_backup
+          FROM process_mac_check_backup
           WHERE generator_name = ?
             AND updated_at BETWEEN ? AND ?
             AND serial IS NOT NULL
@@ -542,10 +628,11 @@ router.get("/daily-process", async (req, res) => {
         ORDER BY d ASC
         `,
         [generator_name, from, to],
+        "process_mac_check_backup",
       ),
 
       // device print last_serial
-      replicaPool.query(
+      safeReplicaRows(
         `
         SELECT d, serial AS last_serial
         FROM (
@@ -566,10 +653,11 @@ router.get("/daily-process", async (req, res) => {
         ORDER BY d ASC
         `,
         [generator_name, from, to],
+        "device_label_print_logs_backup",
       ),
 
       // giftbox print last_serial
-      replicaPool.query(
+      safeReplicaRows(
         `
         SELECT d, serial AS last_serial
         FROM (
@@ -590,11 +678,12 @@ router.get("/daily-process", async (req, res) => {
         ORDER BY d ASC
         `,
         [generator_name, from, to],
+        "giftbox_label_print_logs_backup",
       ),
 
       // cartonbox print last_serial
       // ⚠️ cartonbox_label_print_logs_backup 테이블에 serial 컬럼이 있어야 함
-      replicaPool.query(
+      safeReplicaRows(
         `
         SELECT d, serial AS last_serial
         FROM (
@@ -615,6 +704,7 @@ router.get("/daily-process", async (req, res) => {
         ORDER BY d ASC
         `,
         [generator_name, from, to],
+        "cartonbox_label_print_logs_backup",
       ),
     ]);
 
@@ -636,7 +726,7 @@ router.get("/daily-process", async (req, res) => {
           last_serial: "",
           completed: 0,
         },
-        compare: {
+        mac_check: {
           cumulative: 0,
           input: 0,
           fail: 0,
@@ -679,8 +769,8 @@ router.get("/daily-process", async (req, res) => {
     // numbers
     mergeNumber(mwCompletedDaily, "mac_write", "completed");
     mergeNumber(mwFailDaily, "mac_write", "fail");
-    mergeNumber(cpCompletedDaily, "compare", "completed");
-    mergeNumber(cpFailDaily, "compare", "fail");
+    mergeNumber(cpCompletedDaily, "mac_check", "completed");
+    mergeNumber(cpFailDaily, "mac_check", "fail");
     mergeNumber(deviceDaily, "device_print", "completed");
     mergeNumber(giftboxDaily, "giftbox_print", "completed");
 
@@ -698,7 +788,7 @@ router.get("/daily-process", async (req, res) => {
 
     // last_serial
     mergeLastSerial(mwLastSerialDaily, "mac_write");
-    mergeLastSerial(cpLastSerialDaily, "compare");
+    mergeLastSerial(cpLastSerialDaily, "mac_check");
     mergeLastSerial(deviceLastSerialDaily, "device_print");
     mergeLastSerial(giftboxLastSerialDaily, "giftbox_print");
     mergeLastSerial(cartonLastSerialDaily, "cartonbox_print");
@@ -706,7 +796,7 @@ router.get("/daily-process", async (req, res) => {
     // input 계산 (현재 정책 유지)
     Object.values(mapByDate).forEach((row) => {
       row.mac_write.input = row.mac_write.completed || 0;
-      row.compare.input = row.compare.completed || 0;
+      row.mac_check.input = row.mac_check.completed || 0;
 
       row.device_print.input = row.device_print.completed || 0;
       row.giftbox_print.input = row.giftbox_print.completed || 0;
@@ -725,7 +815,7 @@ router.get("/daily-process", async (req, res) => {
     };
     [
       "mac_write",
-      "compare",
+      "mac_check",
       "device_print",
       "giftbox_print",
       "cartonbox_print",
@@ -738,6 +828,328 @@ router.get("/daily-process", async (req, res) => {
   } catch (err) {
     console.error("daily-process 오류:", err);
     return res.status(500).json({ success: false, message: "서버 오류" });
+  }
+});
+
+router.get("/range-summary", async (req, res) => {
+  const page = toInt(req.query.page, 0, 0, 1000000000);
+  const limit = toInt(req.query.limit, 50, 1, 200);
+  const offset = page * limit;
+
+  try {
+    const [countRows] = await replicaPool.query(`
+      SELECT COUNT(DISTINCT generator_name) AS total
+      FROM process_generated_macs_backup
+    `);
+    const totalCount = countRows[0]?.total ?? 0;
+
+    const [pageGenerators] = await replicaPool.query(
+      `
+      SELECT generator_name, MAX(created_at) AS last_created_at
+      FROM process_generated_macs_backup
+      GROUP BY generator_name
+      ORDER BY last_created_at DESC
+      LIMIT ? OFFSET ?
+      `,
+      [limit, offset],
+    );
+
+    if (pageGenerators.length === 0) {
+      return res.json({
+        success: true,
+        data: [],
+        totalCount,
+        errorCode: 0,
+      });
+    }
+
+    const generatorNames = pageGenerators.map((g) => g.generator_name);
+    const macDecSql = (expr) =>
+      `CAST(CONV(REPLACE(${expr}, ':', ''), 16, 10) AS UNSIGNED)`;
+    const serialNumSql = (expr) =>
+      `CAST(REGEXP_SUBSTR(${expr}, '[0-9]+$') AS UNSIGNED)`;
+
+    const [rows] = await replicaPool.query(
+      `
+      WITH mac_with_decimal AS (
+        SELECT
+          generator_name,
+          mac_address,
+          ${macDecSql("mac_address")} AS mac_decimal
+        FROM process_generated_macs_backup
+        WHERE generator_name IN (?)
+      ),
+      mac_agg AS (
+        SELECT
+          generator_name,
+          MIN(mac_decimal) AS min_dec,
+          MAX(mac_decimal) AS max_dec,
+          COUNT(*) AS total_count,
+          COUNT(DISTINCT mac_decimal) AS distinct_count
+        FROM mac_with_decimal
+        GROUP BY generator_name
+      ),
+      mac_start_end AS (
+        SELECT
+          a.generator_name,
+          (
+            SELECT m.mac_address
+            FROM mac_with_decimal m
+            WHERE m.generator_name = a.generator_name
+              AND m.mac_decimal = a.min_dec
+            LIMIT 1
+          ) AS start_mac,
+          (
+            SELECT m.mac_address
+            FROM mac_with_decimal m
+            WHERE m.generator_name = a.generator_name
+              AND m.mac_decimal = a.max_dec
+            LIMIT 1
+          ) AS end_mac,
+          a.min_dec AS start_decimal,
+          a.max_dec AS end_decimal,
+          (a.max_dec - a.min_dec + 1) AS expected_count,
+          a.total_count,
+          a.distinct_count,
+          (a.total_count - a.distinct_count) AS duplicate_count,
+          ((a.max_dec - a.min_dec + 1) - a.distinct_count) AS missing_count,
+          CASE
+            WHEN a.distinct_count = (a.max_dec - a.min_dec + 1)
+              THEN 'YES'
+            ELSE 'NO'
+          END AS is_continuous
+        FROM mac_agg a
+      ),
+      serial_with_num AS (
+        SELECT
+          generator_name,
+          serial,
+          ${serialNumSql("serial")} AS serial_num
+        FROM process_generated_macs_backup
+        WHERE generator_name IN (?)
+          AND serial IS NOT NULL
+          AND TRIM(serial) <> ''
+          AND REGEXP_SUBSTR(serial, '[0-9]+$') IS NOT NULL
+      ),
+      serial_agg AS (
+        SELECT
+          generator_name,
+          MIN(serial_num) AS min_serial_num,
+          MAX(serial_num) AS max_serial_num
+        FROM serial_with_num
+        GROUP BY generator_name
+      ),
+      serial_start_end AS (
+        SELECT
+          a.generator_name,
+          (
+            SELECT s.serial
+            FROM serial_with_num s
+            WHERE s.generator_name = a.generator_name
+              AND s.serial_num = a.min_serial_num
+            LIMIT 1
+          ) AS serial_start,
+          (
+            SELECT s.serial
+            FROM serial_with_num s
+            WHERE s.generator_name = a.generator_name
+              AND s.serial_num = a.max_serial_num
+            LIMIT 1
+          ) AS serial_end
+        FROM serial_agg a
+      ),
+      latest_meta AS (
+        SELECT
+          t.generator_name,
+          MIN(t.artist) AS artist,
+          MIN(t.lightstick) AS lightstick,
+          MIN(t.fw_version) AS fw_version,
+          MIN(t.device_name) AS device_name,
+          MIN(t.model) AS model,
+          MIN(t.certification_info) AS certification_info,
+          MAX(t.created_at) AS created_at,
+          MAX(t.is_hidden) AS is_hidden
+        FROM process_generated_macs_backup t
+        WHERE t.generator_name IN (?)
+        GROUP BY t.generator_name
+      )
+      SELECT
+        mse.generator_name,
+        mse.start_mac,
+        mse.end_mac,
+        mse.expected_count,
+        mse.total_count,
+        mse.distinct_count,
+        mse.duplicate_count,
+        mse.missing_count,
+        mse.is_continuous,
+        sse.serial_start,
+        sse.serial_end,
+        lm.artist,
+        lm.lightstick,
+        lm.fw_version,
+        lm.device_name,
+        lm.model,
+        lm.certification_info,
+        lm.created_at,
+        lm.is_hidden
+      FROM mac_start_end mse
+      LEFT JOIN serial_start_end sse
+        ON mse.generator_name = sse.generator_name
+      LEFT JOIN latest_meta lm
+        ON mse.generator_name = lm.generator_name
+      ORDER BY lm.created_at DESC
+      `,
+      [generatorNames, generatorNames, generatorNames],
+    );
+
+    return res.json({
+      success: true,
+      data: rows,
+      totalCount,
+      errorCode: 0,
+    });
+  } catch (err) {
+    console.error("[/api/backup/range-summary] error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "server error",
+      data: null,
+      errorCode: 500,
+    });
+  }
+});
+
+router.post("/merge", async (req, res) => {
+  const sourceGenerators = Array.isArray(req.body?.source_generators)
+    ? [
+        ...new Set(
+          req.body.source_generators.map((v) => String(v || "").trim()),
+        ),
+      ].filter(Boolean)
+    : [];
+  const targetGenerator = String(req.body?.target_generator || "").trim();
+
+  if (sourceGenerators.length < 2 || !targetGenerator) {
+    return res.status(400).json({
+      success: false,
+      message: "source_generators and target_generator are required",
+    });
+  }
+
+  if (sourceGenerators.includes(targetGenerator)) {
+    return res.status(400).json({
+      success: false,
+      message: "target_generator must not be included in source_generators",
+    });
+  }
+
+  const tables = [
+    "process_generated_macs_backup",
+    "process_firmware_download_backup",
+    "process_firmware_download_log_backup",
+    "process_device_test_backup",
+    "process_device_test_log_backup",
+    "process_mac_check_backup",
+    "process_mac_check_log_backup",
+    "device_label_print_logs_backup",
+    "giftbox_label_print_logs_backup",
+    "cartonbox_label_print_logs_backup",
+    "cartonbox_label_print_exceptions_backup",
+  ];
+
+  let conn;
+  try {
+    conn = await replicaPool.getConnection();
+    await conn.beginTransaction();
+
+    const [metaRows] = await conn.query(
+      `
+      SELECT generator_name, MIN(artist) AS artist, MIN(lightstick) AS lightstick
+      FROM process_generated_macs_backup
+      WHERE generator_name IN (?)
+      GROUP BY generator_name
+      `,
+      [sourceGenerators],
+    );
+
+    if (metaRows.length !== sourceGenerators.length) {
+      await conn.rollback();
+      return res.status(404).json({
+        success: false,
+        message: "some source generators were not found",
+      });
+    }
+
+    const first = metaRows[0];
+    const sameProduct = metaRows.every(
+      (row) =>
+        row.artist === first.artist && row.lightstick === first.lightstick,
+    );
+
+    if (!sameProduct) {
+      await conn.rollback();
+      return res.status(400).json({
+        success: false,
+        message: "only same artist/lightstick generators can be merged",
+      });
+    }
+
+    const [targetRows] = await conn.query(
+      `
+      SELECT 1
+      FROM process_generated_macs_backup
+      WHERE generator_name = ?
+      LIMIT 1
+      `,
+      [targetGenerator],
+    );
+
+    if (targetRows.length > 0) {
+      await conn.rollback();
+      return res.status(409).json({
+        success: false,
+        message: "target_generator already exists",
+      });
+    }
+
+    const affectedRows = {};
+    for (const table of tables) {
+      const result = await safeReplicaExecute(
+        conn,
+        `
+        UPDATE ${table}
+        SET generator_name = ?
+        WHERE generator_name IN (?)
+        `,
+        [targetGenerator, sourceGenerators],
+        table,
+      );
+      affectedRows[table] = result?.affectedRows ?? 0;
+    }
+
+    await conn.commit();
+    return res.json({
+      success: true,
+      target_generator: targetGenerator,
+      source_generators: sourceGenerators,
+      affectedRows,
+    });
+  } catch (err) {
+    if (conn) {
+      try {
+        await conn.rollback();
+      } catch (rollbackErr) {
+        console.error("[/api/backup/merge] rollback error:", rollbackErr);
+      }
+    }
+    console.error("[/api/backup/merge] error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "server error",
+    });
+  } finally {
+    if (conn) conn.release();
   }
 });
 module.exports = router;

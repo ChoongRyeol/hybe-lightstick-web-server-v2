@@ -11,6 +11,7 @@ const ALLOWED_PROGRAMS = new Set([
   "MacWriteToolV2",
   "FWMonitorTool",
   "LabelPrintToolV2",
+  "MacCheckTool",
 ]);
 
 /**
