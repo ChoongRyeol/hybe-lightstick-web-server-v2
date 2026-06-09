@@ -41,6 +41,15 @@ function buildRequiredMessage(fields) {
   return `required fields missing: ${fields.join(", ")}`;
 }
 
+function buildLockLogMeta(body, extra = {}) {
+  return [
+    `line=${body?.line || "-"}`,
+    `generator=${body?.generator_name || "-"}`,
+    `mac=${extra.mac || "-"}`,
+    `key=${extra.key || "-"}`,
+  ].join(" ");
+}
+
 async function updateFirmwareDownloadGeneratorByGuid(
   conn,
   deviceGuidHex,
@@ -280,6 +289,10 @@ router.post("/lock", async (req, res) => {
 
   const lockKey = `lock:mac_check:${normalizedMac}`;
   const lockValue = await acquireRedisLock(redis, lockKey, 10);
+  const lockLogMeta = buildLockLogMeta(req.body, {
+    mac: colonMac,
+    key: lockKey,
+  });
 
   if (!lockValue) {
     return res.status(409).json({
@@ -297,6 +310,8 @@ router.post("/lock", async (req, res) => {
 
     if (rows.length > 0) {
       await releaseRedisLock(redis, lockKey, lockValue).catch(() => {});
+      console.log(`[LOCK][RELEASE][mac_check][registered] ${lockLogMeta}`);
+
       return res.status(200).json({
         success: true,
         registered: true,
@@ -311,6 +326,7 @@ router.post("/lock", async (req, res) => {
     });
   } catch (err) {
     await releaseRedisLock(redis, lockKey, lockValue).catch(() => {});
+    console.log(`[LOCK][RELEASE][mac_check][error] ${lockLogMeta}`);
 
     console.error("[macCheck/lock] ERROR:", err);
     return res.status(500).json({

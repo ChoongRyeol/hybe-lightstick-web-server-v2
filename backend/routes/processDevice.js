@@ -43,6 +43,15 @@ function normalizeDeviceSn(deviceSn) {
   return hex.length === 32 ? hex : null;
 }
 
+function buildLockLogMeta(body, extra = {}) {
+  return [
+    `line=${body?.line || "-"}`,
+    `generator=${body?.generator_name || "-"}`,
+    `mac=${extra.mac || "-"}`,
+    `key=${extra.key || "-"}`,
+  ].join(" ");
+}
+
 async function processDeviceHandler(req, res) {
   const body = req.body || {};
 
@@ -303,6 +312,10 @@ router.post("/lock", async (req, res) => {
 
   const lockKey = `lock:process_device:${normalizedMac}`;
   const lockValue = await acquireRedisLock(redis, lockKey, 10);
+  const lockLogMeta = buildLockLogMeta(req.body, {
+    mac: colonMac,
+    key: lockKey,
+  });
 
   if (!lockValue) {
     return res.status(409).json({
@@ -320,6 +333,8 @@ router.post("/lock", async (req, res) => {
 
     if (rows.length > 0) {
       await releaseRedisLock(redis, lockKey, lockValue).catch(() => {});
+      console.log(`[LOCK][RELEASE][process_device][registered] ${lockLogMeta}`);
+
       return res.status(200).json({
         success: true,
         registered: true,
@@ -334,6 +349,7 @@ router.post("/lock", async (req, res) => {
     });
   } catch (err) {
     await releaseRedisLock(redis, lockKey, lockValue).catch(() => {});
+    console.log(`[LOCK][RELEASE][process_device][error] ${lockLogMeta}`);
 
     console.error("❌ /process-device/lock error:", err);
     return res.status(500).json({

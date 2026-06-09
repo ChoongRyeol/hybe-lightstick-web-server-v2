@@ -1,0 +1,923 @@
+USE lightstickv2_data;
+
+-- Generated from SHOW CREATE TABLE on the current lightstickv2_data database.
+
+-- cartonbox_label_print_exceptions
+CREATE TABLE IF NOT EXISTS `cartonbox_label_print_exceptions` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `line` varchar(50) DEFAULT NULL,
+  `generator_name` varchar(50) NOT NULL,
+  `mac_address` varchar(32) NOT NULL,
+  `serial` varchar(64) NOT NULL,
+  `artist` varchar(64) NOT NULL,
+  `lightstick` varchar(64) NOT NULL,
+  `model` varchar(50) DEFAULT NULL,
+  `factory_date` varchar(50) DEFAULT NULL,
+  `device_name` varchar(50) DEFAULT NULL,
+  `box_count` int(11) unsigned NOT NULL DEFAULT 0,
+  `box_total_count` int(11) unsigned NOT NULL DEFAULT 0,
+  `user_id` varchar(64) DEFAULT NULL,
+  `user_name` varchar(64) DEFAULT NULL,
+  `description` varchar(10) DEFAULT NULL,
+  `created_at` datetime(6) NOT NULL DEFAULT current_timestamp(6),
+  `updated_at` datetime(6) NOT NULL DEFAULT current_timestamp(6),
+  PRIMARY KEY (`id`),
+  KEY `idx_cartonbox_ex_gen_time_box` (`generator_name`,`created_at`,`box_count`)
+) ENGINE=InnoDB AUTO_INCREMENT=1309 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- cartonbox_label_print_exceptions_backup
+CREATE TABLE IF NOT EXISTS `cartonbox_label_print_exceptions_backup` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `line` varchar(50) DEFAULT NULL,
+  `generator_name` varchar(50) NOT NULL,
+  `mac_address` varchar(32) NOT NULL,
+  `serial` varchar(64) NOT NULL,
+  `artist` varchar(64) NOT NULL,
+  `lightstick` varchar(64) NOT NULL,
+  `model` varchar(50) DEFAULT NULL,
+  `factory_date` varchar(50) DEFAULT NULL,
+  `device_name` varchar(50) DEFAULT NULL,
+  `box_count` int(11) unsigned NOT NULL DEFAULT 0,
+  `box_total_count` int(11) unsigned NOT NULL DEFAULT 0,
+  `user_id` varchar(64) DEFAULT NULL,
+  `user_name` varchar(64) DEFAULT NULL,
+  `description` varchar(10) DEFAULT NULL,
+  `created_at` datetime(6) NOT NULL DEFAULT current_timestamp(6),
+  `updated_at` datetime(6) NOT NULL DEFAULT current_timestamp(6),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- cartonbox_label_print_logs
+CREATE TABLE IF NOT EXISTS `cartonbox_label_print_logs` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `line` varchar(50) DEFAULT NULL,
+  `generator_name` varchar(50) NOT NULL,
+  `mac_address` varchar(32) NOT NULL,
+  `serial` varchar(64) NOT NULL,
+  `artist` varchar(64) NOT NULL,
+  `lightstick` varchar(64) NOT NULL,
+  `model` varchar(50) DEFAULT NULL,
+  `factory_date` varchar(50) DEFAULT NULL,
+  `device_name` varchar(50) DEFAULT NULL,
+  `box_count` int(11) unsigned NOT NULL DEFAULT 0,
+  `box_total_count` int(11) unsigned NOT NULL DEFAULT 0,
+  `printed_at` datetime(6) NOT NULL DEFAULT current_timestamp(6),
+  `updated_at` datetime(6) DEFAULT current_timestamp(6),
+  `user_id` varchar(64) DEFAULT NULL,
+  `user_name` varchar(64) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `mac_address` (`mac_address`),
+  KEY `ix_cboxprint_gn_time` (`generator_name`,`updated_at`),
+  KEY `ix_cboxprint_gn_ser` (`generator_name`,`serial` DESC),
+  KEY `idx_cartonbox_logs_gen_time_box` (`generator_name`,`printed_at`,`box_count`),
+  KEY `idx_cartonbox_logs_serial` (`serial`),
+  KEY `idx_cartonbox_logs_mac` (`mac_address`),
+  KEY `ix_cboxprint_gn_mac` (`generator_name`,`mac_address`)
+) ENGINE=InnoDB AUTO_INCREMENT=1272333 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- cartonbox_label_print_logs_backup
+CREATE TABLE IF NOT EXISTS `cartonbox_label_print_logs_backup` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `line` varchar(50) DEFAULT NULL,
+  `generator_name` varchar(50) NOT NULL,
+  `mac_address` varchar(32) NOT NULL,
+  `serial` varchar(64) NOT NULL,
+  `artist` varchar(64) NOT NULL,
+  `lightstick` varchar(64) NOT NULL,
+  `model` varchar(50) DEFAULT NULL,
+  `factory_date` varchar(50) DEFAULT NULL,
+  `device_name` varchar(50) DEFAULT NULL,
+  `box_count` int(11) unsigned NOT NULL DEFAULT 0,
+  `box_total_count` int(11) unsigned NOT NULL DEFAULT 0,
+  `printed_at` datetime(6) NOT NULL DEFAULT current_timestamp(6),
+  `updated_at` datetime(6) DEFAULT current_timestamp(6),
+  `user_id` varchar(64) DEFAULT NULL,
+  `user_name` varchar(64) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `mac_address` (`mac_address`),
+  KEY `ix_cboxprint_gn_time` (`generator_name`,`updated_at`),
+  KEY `ix_cboxprint_gn_ser` (`generator_name`,`serial` DESC)
+) ENGINE=InnoDB AUTO_INCREMENT=10461 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- device_label_print_logs
+CREATE TABLE IF NOT EXISTS `device_label_print_logs` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `line` varchar(50) DEFAULT NULL,
+  `generator_name` varchar(50) NOT NULL,
+  `mac_address` varchar(32) NOT NULL,
+  `serial` varchar(64) NOT NULL,
+  `artist` varchar(64) NOT NULL,
+  `lightstick` varchar(64) NOT NULL,
+  `certification_info` varchar(50) DEFAULT NULL,
+  `model` varchar(50) DEFAULT NULL,
+  `device_name` varchar(50) DEFAULT NULL,
+  `printed_at` datetime(6) NOT NULL DEFAULT current_timestamp(6),
+  `updated_at` datetime(6) DEFAULT current_timestamp(6),
+  `user_id` varchar(64) DEFAULT NULL,
+  `user_name` varchar(64) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `mac_address` (`mac_address`),
+  KEY `ix_devprint_gn_time` (`generator_name`,`updated_at`),
+  KEY `ix_devprint_gn_ser` (`generator_name`,`serial` DESC)
+) ENGINE=InnoDB AUTO_INCREMENT=1355239 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- device_label_print_logs_backup
+CREATE TABLE IF NOT EXISTS `device_label_print_logs_backup` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `line` varchar(50) DEFAULT NULL,
+  `generator_name` varchar(50) NOT NULL,
+  `mac_address` varchar(32) NOT NULL,
+  `serial` varchar(64) NOT NULL,
+  `artist` varchar(64) NOT NULL,
+  `lightstick` varchar(64) NOT NULL,
+  `certification_info` varchar(50) DEFAULT NULL,
+  `model` varchar(50) DEFAULT NULL,
+  `device_name` varchar(50) DEFAULT NULL,
+  `printed_at` datetime(6) NOT NULL DEFAULT current_timestamp(6),
+  `updated_at` datetime(6) DEFAULT current_timestamp(6),
+  `user_id` varchar(64) DEFAULT NULL,
+  `user_name` varchar(64) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `mac_address` (`mac_address`),
+  KEY `ix_devprint_gn_time` (`generator_name`,`updated_at`),
+  KEY `ix_devprint_gn_ser` (`generator_name`,`serial` DESC)
+) ENGINE=InnoDB AUTO_INCREMENT=1355239 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- generator_merge_logs
+CREATE TABLE IF NOT EXISTS `generator_merge_logs` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `target_generator` varchar(255) NOT NULL,
+  `source_generators` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`source_generators`)),
+  `merged_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `merged_by` varchar(100) DEFAULT NULL,
+  `note` varchar(500) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_generator_merge_logs_merged_at` (`merged_at`),
+  KEY `idx_generator_merge_logs_target` (`target_generator`)
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- generator_merge_logs_backup
+CREATE TABLE IF NOT EXISTS `generator_merge_logs_backup` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `target_generator` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `source_generators` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `merged_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `merged_by` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `note` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- giftbox_label_print_logs
+CREATE TABLE IF NOT EXISTS `giftbox_label_print_logs` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `line` varchar(50) DEFAULT NULL,
+  `generator_name` varchar(50) NOT NULL,
+  `mac_address` varchar(32) NOT NULL,
+  `serial` varchar(64) NOT NULL,
+  `artist` varchar(64) NOT NULL,
+  `lightstick` varchar(64) NOT NULL,
+  `certification_info` varchar(50) DEFAULT NULL,
+  `model` varchar(50) DEFAULT NULL,
+  `device_name` varchar(50) DEFAULT NULL,
+  `printed_at` datetime(6) NOT NULL DEFAULT current_timestamp(6),
+  `updated_at` datetime(6) DEFAULT current_timestamp(6),
+  `user_id` varchar(64) DEFAULT NULL,
+  `user_name` varchar(64) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `mac_address` (`mac_address`),
+  KEY `ix_gboxprint_gn_time` (`generator_name`,`updated_at`),
+  KEY `ix_gboxprint_gn_ser` (`generator_name`,`serial` DESC)
+) ENGINE=InnoDB AUTO_INCREMENT=1306668 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- giftbox_label_print_logs_backup
+CREATE TABLE IF NOT EXISTS `giftbox_label_print_logs_backup` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `line` varchar(50) DEFAULT NULL,
+  `generator_name` varchar(50) NOT NULL,
+  `mac_address` varchar(32) NOT NULL,
+  `serial` varchar(64) NOT NULL,
+  `artist` varchar(64) NOT NULL,
+  `lightstick` varchar(64) NOT NULL,
+  `certification_info` varchar(50) DEFAULT NULL,
+  `model` varchar(50) DEFAULT NULL,
+  `device_name` varchar(50) DEFAULT NULL,
+  `printed_at` datetime(6) NOT NULL DEFAULT current_timestamp(6),
+  `updated_at` datetime(6) DEFAULT current_timestamp(6),
+  `user_id` varchar(64) DEFAULT NULL,
+  `user_name` varchar(64) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `mac_address` (`mac_address`),
+  KEY `ix_gboxprint_gn_time` (`generator_name`,`updated_at`),
+  KEY `ix_gboxprint_gn_ser` (`generator_name`,`serial` DESC)
+) ENGINE=InnoDB AUTO_INCREMENT=3815 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- mac_delete_logs
+CREATE TABLE IF NOT EXISTS `mac_delete_logs` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `generator_name` varchar(50) NOT NULL,
+  `mac_address` varchar(50) NOT NULL,
+  `serial` varchar(20) NOT NULL,
+  `artist` varchar(50) NOT NULL,
+  `lightstick` varchar(64) NOT NULL,
+  `device_name` varchar(50) DEFAULT NULL,
+  `fw_version` varchar(10) DEFAULT NULL,
+  `deleted_table` varchar(100) NOT NULL,
+  `deleted_at` datetime DEFAULT current_timestamp(),
+  `deleted_by` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=91 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- mac_delete_logs_backup
+CREATE TABLE IF NOT EXISTS `mac_delete_logs_backup` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `generator_name` varchar(50) NOT NULL,
+  `mac_address` varchar(50) NOT NULL,
+  `serial` varchar(20) NOT NULL,
+  `artist` varchar(50) NOT NULL,
+  `lightstick` varchar(64) NOT NULL,
+  `device_name` varchar(50) DEFAULT NULL,
+  `fw_version` varchar(10) DEFAULT NULL,
+  `deleted_table` varchar(100) NOT NULL,
+  `deleted_at` datetime DEFAULT current_timestamp(),
+  `deleted_by` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- process_compare
+CREATE TABLE IF NOT EXISTS `process_compare` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `line` varchar(50) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `mac_address` varchar(50) NOT NULL,
+  `generator_name` varchar(50) NOT NULL,
+  `artist` varchar(50) NOT NULL,
+  `lightstick` varchar(64) NOT NULL,
+  `serial` varchar(20) NOT NULL,
+  `fw_version` varchar(10) DEFAULT NULL,
+  `device_name` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `mac_address` (`mac_address`),
+  KEY `ix_pc_gn_time` (`generator_name`,`updated_at`),
+  KEY `ix_pc_gn_mac` (`generator_name`,`mac_address`),
+  KEY `ix_pc_gn_ser` (`generator_name`,`serial` DESC)
+) ENGINE=InnoDB AUTO_INCREMENT=1264260 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- process_compare_backup
+CREATE TABLE IF NOT EXISTS `process_compare_backup` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `line` varchar(50) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `mac_address` varchar(50) NOT NULL,
+  `generator_name` varchar(50) NOT NULL,
+  `artist` varchar(50) NOT NULL,
+  `lightstick` varchar(64) NOT NULL,
+  `serial` varchar(20) NOT NULL,
+  `fw_version` varchar(10) DEFAULT NULL,
+  `device_name` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `mac_address` (`mac_address`),
+  KEY `ix_pc_gn_time` (`generator_name`,`updated_at`),
+  KEY `ix_pc_gn_mac` (`generator_name`,`mac_address`),
+  KEY `ix_pc_gn_ser` (`generator_name`,`serial` DESC)
+) ENGINE=InnoDB AUTO_INCREMENT=7377 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- process_compare_log
+CREATE TABLE IF NOT EXISTS `process_compare_log` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `line` varchar(50) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `generator_name` varchar(50) NOT NULL,
+  `lightstick` varchar(64) NOT NULL,
+  `artist` varchar(50) NOT NULL,
+  `serial` varchar(20) NOT NULL,
+  `mac_address` varchar(50) NOT NULL,
+  `fw_version` varchar(10) DEFAULT NULL,
+  `device_name` varchar(50) DEFAULT NULL,
+  `result` varchar(50) DEFAULT NULL,
+  `description` varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `ix_pc_log_gn_time` (`generator_name`,`updated_at`),
+  KEY `ix_pc_log_gn_mac` (`generator_name`,`mac_address`),
+  KEY `ix_pclog_gn_time_result_serial` (`generator_name`,`updated_at`,`result`,`serial`),
+  KEY `idx_pcl_merge_check` (`mac_address`,`serial`,`result`,`created_at`)
+) ENGINE=InnoDB AUTO_INCREMENT=1275961 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- process_compare_log_backup
+CREATE TABLE IF NOT EXISTS `process_compare_log_backup` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `line` varchar(50) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `generator_name` varchar(50) NOT NULL,
+  `lightstick` varchar(64) NOT NULL,
+  `artist` varchar(50) NOT NULL,
+  `serial` varchar(20) NOT NULL,
+  `mac_address` varchar(50) NOT NULL,
+  `fw_version` varchar(10) DEFAULT NULL,
+  `device_name` varchar(50) DEFAULT NULL,
+  `result` varchar(50) DEFAULT NULL,
+  `description` varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `ix_pc_log_gn_time` (`generator_name`,`updated_at`),
+  KEY `ix_pc_log_gn_mac` (`generator_name`,`mac_address`)
+) ENGINE=InnoDB AUTO_INCREMENT=7493 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- process_device_test
+CREATE TABLE IF NOT EXISTS `process_device_test` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `line` varchar(50) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `generator_name` varchar(50) NOT NULL,
+  `artist` varchar(50) NOT NULL,
+  `lightstick` varchar(64) NOT NULL,
+  `serial` varchar(20) NOT NULL,
+  `mac_address` varchar(50) NOT NULL,
+  `device_guid` binary(16) DEFAULT NULL,
+  `device_sn_raw` binary(16) DEFAULT NULL,
+  `device_sn_enc` binary(16) DEFAULT NULL,
+  `last_log_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_pdt_mac_address` (`mac_address`),
+  KEY `ix_pdt_gn_time` (`generator_name`,`updated_at`),
+  KEY `ix_pdt_gn_mac` (`generator_name`,`mac_address`),
+  KEY `ix_pdt_gn_ser` (`generator_name`,`serial` DESC),
+  KEY `idx_pdt_device_guid` (`device_guid`),
+  KEY `idx_pdt_gen_guid` (`generator_name`,`device_guid`),
+  KEY `idx_pdt_last_log_id` (`last_log_id`),
+  KEY `idx_pdt_device_sn_raw` (`device_sn_raw`),
+  KEY `idx_pdt_device_sn_enc` (`device_sn_enc`),
+  KEY `idx_pdt_gen_device_sn_raw` (`generator_name`,`device_sn_raw`)
+) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- process_device_test_backup
+CREATE TABLE IF NOT EXISTS `process_device_test_backup` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `line` varchar(50) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `generator_name` varchar(50) NOT NULL,
+  `artist` varchar(50) NOT NULL,
+  `lightstick` varchar(64) NOT NULL,
+  `serial` varchar(20) NOT NULL,
+  `mac_address` varchar(50) NOT NULL,
+  `device_guid` binary(16) DEFAULT NULL,
+  `device_sn_raw` binary(16) DEFAULT NULL,
+  `device_sn_enc` binary(16) DEFAULT NULL,
+  `last_log_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_pdt_mac_address` (`mac_address`),
+  KEY `ix_pdt_gn_time` (`generator_name`,`updated_at`),
+  KEY `ix_pdt_gn_mac` (`generator_name`,`mac_address`),
+  KEY `ix_pdt_gn_ser` (`generator_name`,`serial` DESC),
+  KEY `idx_pdt_device_guid` (`device_guid`),
+  KEY `idx_pdt_gen_guid` (`generator_name`,`device_guid`),
+  KEY `idx_pdt_last_log_id` (`last_log_id`),
+  KEY `idx_pdt_bak_device_sn_raw` (`device_sn_raw`),
+  KEY `idx_pdt_bak_device_sn_enc` (`device_sn_enc`),
+  KEY `idx_pdt_bak_gen_device_sn_raw` (`generator_name`,`device_sn_raw`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- process_device_test_log
+CREATE TABLE IF NOT EXISTS `process_device_test_log` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `line` varchar(50) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `generator_name` varchar(50) NOT NULL,
+  `artist` varchar(50) NOT NULL,
+  `lightstick` varchar(64) NOT NULL,
+  `serial` varchar(20) NOT NULL,
+  `mac_address` varchar(50) NOT NULL,
+  `device_guid` binary(16) DEFAULT NULL,
+  `device_sn_raw` binary(16) DEFAULT NULL,
+  `device_sn_enc` binary(16) DEFAULT NULL,
+  `fw_version` varchar(10) DEFAULT NULL,
+  `device_name` varchar(50) DEFAULT NULL,
+  `result` varchar(20) NOT NULL,
+  `write_result` varchar(20) DEFAULT NULL,
+  `rssi` int(11) DEFAULT NULL,
+  `rssi_result` varchar(20) DEFAULT NULL,
+  `description` varchar(255) DEFAULT NULL,
+  `high_current` decimal(10,3) DEFAULT NULL,
+  `high_current_result` varchar(20) DEFAULT NULL,
+  `low_current` decimal(10,3) DEFAULT NULL,
+  `low_current_result` varchar(20) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `ix_pdtl_gn_time` (`generator_name`,`updated_at`),
+  KEY `ix_pdtl_gn_mac` (`generator_name`,`mac_address`),
+  KEY `ix_pdtl_gn_ser` (`generator_name`,`serial`),
+  KEY `idx_pdtl_device_guid` (`device_guid`),
+  KEY `idx_pdtl_gen_guid` (`generator_name`,`device_guid`),
+  KEY `idx_pdtl_result_time` (`result`,`updated_at`),
+  KEY `idx_pdtl_device_sn_raw` (`device_sn_raw`),
+  KEY `idx_pdtl_device_sn_enc` (`device_sn_enc`),
+  KEY `idx_pdtl_gen_device_sn_raw` (`generator_name`,`device_sn_raw`)
+) ENGINE=InnoDB AUTO_INCREMENT=57 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- process_device_test_log_backup
+CREATE TABLE IF NOT EXISTS `process_device_test_log_backup` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `line` varchar(50) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `generator_name` varchar(50) NOT NULL,
+  `artist` varchar(50) NOT NULL,
+  `lightstick` varchar(64) NOT NULL,
+  `serial` varchar(20) NOT NULL,
+  `mac_address` varchar(50) NOT NULL,
+  `device_guid` binary(16) DEFAULT NULL,
+  `device_sn_raw` binary(16) DEFAULT NULL,
+  `device_sn_enc` binary(16) DEFAULT NULL,
+  `fw_version` varchar(10) DEFAULT NULL,
+  `device_name` varchar(50) DEFAULT NULL,
+  `result` varchar(20) NOT NULL,
+  `write_result` varchar(20) DEFAULT NULL,
+  `rssi` int(11) DEFAULT NULL,
+  `rssi_result` varchar(20) DEFAULT NULL,
+  `description` varchar(255) DEFAULT NULL,
+  `high_current` decimal(10,3) DEFAULT NULL,
+  `high_current_result` varchar(20) DEFAULT NULL,
+  `low_current` decimal(10,3) DEFAULT NULL,
+  `low_current_result` varchar(20) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `ix_pdtl_gn_time` (`generator_name`,`updated_at`),
+  KEY `ix_pdtl_gn_mac` (`generator_name`,`mac_address`),
+  KEY `ix_pdtl_gn_ser` (`generator_name`,`serial`),
+  KEY `idx_pdtl_device_guid` (`device_guid`),
+  KEY `idx_pdtl_gen_guid` (`generator_name`,`device_guid`),
+  KEY `idx_pdtl_result_time` (`result`,`updated_at`),
+  KEY `idx_pdtl_bak_device_sn_raw` (`device_sn_raw`),
+  KEY `idx_pdtl_bak_device_sn_enc` (`device_sn_enc`),
+  KEY `idx_pdtl_bak_gen_device_sn_raw` (`generator_name`,`device_sn_raw`)
+) ENGINE=InnoDB AUTO_INCREMENT=57 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- process_firmware_download
+CREATE TABLE IF NOT EXISTS `process_firmware_download` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `created_at` datetime(3) NOT NULL DEFAULT current_timestamp(3),
+  `updated_at` datetime(3) NOT NULL DEFAULT current_timestamp(3) ON UPDATE current_timestamp(3),
+  `line` varchar(50) NOT NULL,
+  `generator_name` varchar(100) NOT NULL,
+  `artist` varchar(100) DEFAULT NULL,
+  `lightstick` varchar(100) DEFAULT NULL,
+  `serial` varchar(50) DEFAULT NULL,
+  `device_guid` binary(16) NOT NULL,
+  `board_name` varchar(50) DEFAULT NULL,
+  `last_log_id` bigint(20) unsigned DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_fw_download_device_guid` (`device_guid`),
+  KEY `idx_fw_download_generator_created` (`generator_name`,`created_at`),
+  KEY `idx_fw_download_serial` (`serial`),
+  KEY `idx_fw_download_line_created` (`line`,`created_at`),
+  KEY `idx_fw_download_artist_lightstick` (`artist`,`lightstick`),
+  KEY `idx_fw_download_guid_serial` (`device_guid`,`serial`),
+  KEY `idx_fw_download_generator_guid` (`generator_name`,`device_guid`)
+) ENGINE=InnoDB AUTO_INCREMENT=506 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- process_firmware_download_backup
+CREATE TABLE IF NOT EXISTS `process_firmware_download_backup` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `line` varchar(50) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `generator_name` varchar(50) NOT NULL,
+  `artist` varchar(50) DEFAULT NULL,
+  `lightstick` varchar(64) DEFAULT NULL,
+  `serial` varchar(20) DEFAULT NULL,
+  `device_guid` binary(16) NOT NULL,
+  `board_name` varchar(100) DEFAULT NULL,
+  `last_log_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_pfd_device_guid` (`device_guid`),
+  KEY `ix_pfd_gn_time` (`generator_name`,`updated_at`),
+  KEY `ix_pfd_gn_serial` (`generator_name`,`serial`),
+  KEY `idx_pfd_last_log_id` (`last_log_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- process_firmware_download_log
+CREATE TABLE IF NOT EXISTS `process_firmware_download_log` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `created_at` datetime(3) NOT NULL DEFAULT current_timestamp(3),
+  `line` varchar(50) NOT NULL,
+  `generator_name` varchar(100) NOT NULL,
+  `artist` varchar(100) DEFAULT NULL,
+  `lightstick` varchar(100) DEFAULT NULL,
+  `serial` varchar(50) DEFAULT NULL,
+  `device_guid` binary(16) DEFAULT NULL,
+  `row_id` bigint(20) DEFAULT NULL,
+  `evk_time` datetime(3) DEFAULT NULL,
+  `write_check` tinyint(4) NOT NULL DEFAULT 0,
+  `board_name` varchar(50) DEFAULT NULL,
+  `result` varchar(30) DEFAULT NULL,
+  `disable_protect_flash_r` varchar(50) DEFAULT NULL,
+  `disable_protect_flash_v` varchar(100) DEFAULT NULL,
+  `erase_firmware_k_r` varchar(50) DEFAULT NULL,
+  `erase_firmware_k_v` varchar(100) DEFAULT NULL,
+  `calib_fre_offset_2498mhz_hz_r` varchar(50) DEFAULT NULL,
+  `calib_fre_offset_2498mhz_hz_v` varchar(100) DEFAULT NULL,
+  `tx_cnt_2498mhz_r` varchar(50) DEFAULT NULL,
+  `tx_cnt_2498mhz_v` varchar(100) DEFAULT NULL,
+  `rx_cnt_2498mhz_r` varchar(50) DEFAULT NULL,
+  `rx_cnt_2498mhz_v` varchar(100) DEFAULT NULL,
+  `tx_power_2498mhz_db_r` varchar(50) DEFAULT NULL,
+  `tx_power_2498mhz_db_v` varchar(100) DEFAULT NULL,
+  `rx_power_2498mhz_r` varchar(50) DEFAULT NULL,
+  `rx_power_2498mhz_v` varchar(100) DEFAULT NULL,
+  `calib_fre_offset_2398mhz_hz_r` varchar(50) DEFAULT NULL,
+  `calib_fre_offset_2398mhz_hz_v` varchar(100) DEFAULT NULL,
+  `tx_cnt_2398mhz_r` varchar(50) DEFAULT NULL,
+  `tx_cnt_2398mhz_v` varchar(100) DEFAULT NULL,
+  `rx_cnt_2398mhz_r` varchar(50) DEFAULT NULL,
+  `rx_cnt_2398mhz_v` varchar(100) DEFAULT NULL,
+  `tx_power_2398mhz_db_r` varchar(50) DEFAULT NULL,
+  `tx_power_2398mhz_db_v` varchar(100) DEFAULT NULL,
+  `rx_power_2398mhz_r` varchar(50) DEFAULT NULL,
+  `rx_power_2398mhz_v` varchar(100) DEFAULT NULL,
+  `erase_mac_k_r` varchar(50) DEFAULT NULL,
+  `erase_mac_k_v` varchar(100) DEFAULT NULL,
+  `write_firmware_err_addr_r` varchar(50) DEFAULT NULL,
+  `write_firmware_err_addr_v` varchar(100) DEFAULT NULL,
+  `write_mac_hb_r` varchar(50) DEFAULT NULL,
+  `write_mac_hb_v` varchar(100) DEFAULT NULL,
+  `write_mac_lb_r` varchar(50) DEFAULT NULL,
+  `write_mac_lb_v` varchar(100) DEFAULT NULL,
+  `write_freoffset_r` varchar(50) DEFAULT NULL,
+  `write_freoffset_v` varchar(100) DEFAULT NULL,
+  `check_firmware_err_addr_r` varchar(50) DEFAULT NULL,
+  `check_firmware_err_addr_v` varchar(100) DEFAULT NULL,
+  `check_mac_lb_r` varchar(50) DEFAULT NULL,
+  `check_mac_lb_v` varchar(100) DEFAULT NULL,
+  `read_mac_lb_value_r` varchar(50) DEFAULT NULL,
+  `read_mac_lb_value_v` varchar(100) DEFAULT NULL,
+  `check_freoffset_r` varchar(50) DEFAULT NULL,
+  `check_freoffset_v` varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_line_created` (`line`,`created_at`),
+  KEY `idx_generator_created` (`generator_name`,`created_at`),
+  KEY `idx_serial_created` (`serial`,`created_at`),
+  KEY `idx_board_created` (`board_name`,`created_at`),
+  KEY `idx_result_created` (`result`,`created_at`),
+  KEY `idx_evk_time` (`evk_time`),
+  KEY `idx_row_id` (`row_id`),
+  KEY `idx_device_guid_created` (`device_guid`,`created_at`),
+  KEY `idx_generator_guid_created` (`generator_name`,`device_guid`,`created_at`)
+) ENGINE=InnoDB AUTO_INCREMENT=734 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- process_firmware_download_log_backup
+CREATE TABLE IF NOT EXISTS `process_firmware_download_log_backup` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `line` varchar(50) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `generator_name` varchar(50) NOT NULL,
+  `artist` varchar(50) DEFAULT NULL,
+  `lightstick` varchar(64) DEFAULT NULL,
+  `serial` varchar(20) DEFAULT NULL,
+  `device_guid` binary(16) DEFAULT NULL,
+  `row_id` varchar(100) DEFAULT NULL,
+  `evk_time` varchar(100) DEFAULT NULL,
+  `write_check` int(11) DEFAULT 0,
+  `board_name` varchar(100) DEFAULT NULL,
+  `result` varchar(20) NOT NULL,
+  `disable_protect_flash_r` varchar(100) DEFAULT NULL,
+  `disable_protect_flash_v` varchar(100) DEFAULT NULL,
+  `erase_firmware_k_r` varchar(100) DEFAULT NULL,
+  `erase_firmware_k_v` varchar(100) DEFAULT NULL,
+  `calib_fre_offset_2498mhz_hz_r` varchar(100) DEFAULT NULL,
+  `calib_fre_offset_2498mhz_hz_v` varchar(100) DEFAULT NULL,
+  `tx_cnt_2498mhz_r` varchar(100) DEFAULT NULL,
+  `tx_cnt_2498mhz_v` varchar(100) DEFAULT NULL,
+  `rx_cnt_2498mhz_r` varchar(100) DEFAULT NULL,
+  `rx_cnt_2498mhz_v` varchar(100) DEFAULT NULL,
+  `tx_power_2498mhz_db_r` varchar(100) DEFAULT NULL,
+  `tx_power_2498mhz_db_v` varchar(100) DEFAULT NULL,
+  `rx_power_2498mhz_r` varchar(100) DEFAULT NULL,
+  `rx_power_2498mhz_v` varchar(100) DEFAULT NULL,
+  `calib_fre_offset_2398mhz_hz_r` varchar(100) DEFAULT NULL,
+  `calib_fre_offset_2398mhz_hz_v` varchar(100) DEFAULT NULL,
+  `tx_cnt_2398mhz_r` varchar(100) DEFAULT NULL,
+  `tx_cnt_2398mhz_v` varchar(100) DEFAULT NULL,
+  `rx_cnt_2398mhz_r` varchar(100) DEFAULT NULL,
+  `rx_cnt_2398mhz_v` varchar(100) DEFAULT NULL,
+  `tx_power_2398mhz_db_r` varchar(100) DEFAULT NULL,
+  `tx_power_2398mhz_db_v` varchar(100) DEFAULT NULL,
+  `rx_power_2398mhz_r` varchar(100) DEFAULT NULL,
+  `rx_power_2398mhz_v` varchar(100) DEFAULT NULL,
+  `erase_mac_k_r` varchar(100) DEFAULT NULL,
+  `erase_mac_k_v` varchar(100) DEFAULT NULL,
+  `write_firmware_err_addr_r` varchar(100) DEFAULT NULL,
+  `write_firmware_err_addr_v` varchar(100) DEFAULT NULL,
+  `write_mac_hb_r` varchar(100) DEFAULT NULL,
+  `write_mac_hb_v` varchar(100) DEFAULT NULL,
+  `write_mac_lb_r` varchar(100) DEFAULT NULL,
+  `write_mac_lb_v` varchar(100) DEFAULT NULL,
+  `write_freoffset_r` varchar(100) DEFAULT NULL,
+  `write_freoffset_v` varchar(100) DEFAULT NULL,
+  `check_firmware_err_addr_r` varchar(100) DEFAULT NULL,
+  `check_firmware_err_addr_v` varchar(100) DEFAULT NULL,
+  `check_mac_lb_r` varchar(100) DEFAULT NULL,
+  `check_mac_lb_v` varchar(100) DEFAULT NULL,
+  `read_mac_lb_value_r` varchar(100) DEFAULT NULL,
+  `read_mac_lb_value_v` varchar(100) DEFAULT NULL,
+  `check_freoffset_r` varchar(100) DEFAULT NULL,
+  `check_freoffset_v` varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `ix_pfdl_gn_time` (`generator_name`,`created_at`),
+  KEY `ix_pfdl_gn_serial` (`generator_name`,`serial`),
+  KEY `ix_pfdl_result_time` (`result`,`created_at`),
+  KEY `idx_pfdl_device_guid` (`device_guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- process_generated_macs
+CREATE TABLE IF NOT EXISTS `process_generated_macs` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `generator_name` varchar(50) NOT NULL,
+  `lightstick` varchar(64) NOT NULL,
+  `artist` varchar(50) NOT NULL,
+  `mac_address` varchar(20) NOT NULL,
+  `serial` varchar(20) NOT NULL,
+  `fw_version` varchar(10) DEFAULT NULL,
+  `device_name` varchar(50) DEFAULT NULL,
+  `model` varchar(50) DEFAULT NULL,
+  `certification_info` varchar(50) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `is_hidden` tinyint(1) NOT NULL DEFAULT 0,
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `mac_decimal` bigint(20) unsigned GENERATED ALWAYS AS (cast(conv(replace(replace(`mac_address`,':',''),'-',''),16,10) as unsigned)) STORED,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `mac_address` (`mac_address`),
+  KEY `idx_pgm_generator_created` (`generator_name`,`created_at`),
+  KEY `idx_pgm_generator_mac` (`generator_name`,`mac_address`),
+  KEY `idx_pgm_generator_id` (`generator_name`,`id`),
+  KEY `idx_pgm_hidden_gen_id` (`is_hidden`,`generator_name`,`id`),
+  KEY `idx_pgm_gen_serial` (`generator_name`,`serial`),
+  KEY `idx_pgm_gen_mac_decimal` (`generator_name`,`mac_decimal`)
+) ENGINE=InnoDB AUTO_INCREMENT=769 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- process_generated_macs_backup
+CREATE TABLE IF NOT EXISTS `process_generated_macs_backup` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `generator_name` varchar(50) NOT NULL,
+  `lightstick` varchar(64) NOT NULL,
+  `artist` varchar(50) NOT NULL,
+  `mac_address` varchar(20) NOT NULL,
+  `serial` varchar(20) NOT NULL,
+  `fw_version` varchar(10) DEFAULT NULL,
+  `device_name` varchar(50) DEFAULT NULL,
+  `model` varchar(50) DEFAULT NULL,
+  `certification_info` varchar(50) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `is_hidden` tinyint(1) NOT NULL DEFAULT 0,
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `mac_decimal` bigint(20) unsigned DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `mac_address` (`mac_address`),
+  KEY `idx_pgm_generator_created` (`generator_name`,`created_at`),
+  KEY `idx_pgm_generator_mac` (`generator_name`,`mac_address`)
+) ENGINE=InnoDB AUTO_INCREMENT=1887575 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- process_mac_check
+CREATE TABLE IF NOT EXISTS `process_mac_check` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `line` varchar(50) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `generator_name` varchar(50) NOT NULL,
+  `artist` varchar(50) NOT NULL,
+  `lightstick` varchar(64) NOT NULL,
+  `serial` varchar(20) NOT NULL,
+  `mac_address` varchar(50) NOT NULL,
+  `device_guid` binary(16) DEFAULT NULL,
+  `device_sn_raw` binary(16) DEFAULT NULL,
+  `device_sn_enc` binary(16) DEFAULT NULL,
+  `last_log_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_pmc_mac_address` (`mac_address`),
+  KEY `ix_pmc_gn_time` (`generator_name`,`updated_at`),
+  KEY `ix_pmc_gn_mac` (`generator_name`,`mac_address`),
+  KEY `ix_pmc_gn_ser` (`generator_name`,`serial` DESC),
+  KEY `idx_pmc_device_guid` (`device_guid`),
+  KEY `idx_pmc_gen_guid` (`generator_name`,`device_guid`),
+  KEY `idx_pmc_last_log_id` (`last_log_id`),
+  KEY `idx_pmc_device_sn_raw` (`device_sn_raw`),
+  KEY `idx_pmc_device_sn_enc` (`device_sn_enc`),
+  KEY `idx_pmc_gen_device_sn_raw` (`generator_name`,`device_sn_raw`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- process_mac_check_backup
+CREATE TABLE IF NOT EXISTS `process_mac_check_backup` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `line` varchar(50) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `generator_name` varchar(50) NOT NULL,
+  `artist` varchar(50) NOT NULL,
+  `lightstick` varchar(64) NOT NULL,
+  `serial` varchar(20) NOT NULL,
+  `mac_address` varchar(50) NOT NULL,
+  `device_guid` binary(16) DEFAULT NULL,
+  `device_sn_raw` binary(16) DEFAULT NULL,
+  `device_sn_enc` binary(16) DEFAULT NULL,
+  `last_log_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_pmc_mac_address` (`mac_address`),
+  KEY `ix_pmc_gn_time` (`generator_name`,`updated_at`),
+  KEY `ix_pmc_gn_mac` (`generator_name`,`mac_address`),
+  KEY `ix_pmc_gn_ser` (`generator_name`,`serial` DESC),
+  KEY `idx_pmc_device_guid` (`device_guid`),
+  KEY `idx_pmc_gen_guid` (`generator_name`,`device_guid`),
+  KEY `idx_pmc_last_log_id` (`last_log_id`),
+  KEY `idx_pmc_bak_device_sn_raw` (`device_sn_raw`),
+  KEY `idx_pmc_bak_device_sn_enc` (`device_sn_enc`),
+  KEY `idx_pmc_bak_gen_device_sn_raw` (`generator_name`,`device_sn_raw`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- process_mac_check_log
+CREATE TABLE IF NOT EXISTS `process_mac_check_log` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `line` varchar(50) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `generator_name` varchar(50) NOT NULL,
+  `artist` varchar(50) NOT NULL,
+  `lightstick` varchar(64) NOT NULL,
+  `serial` varchar(20) NOT NULL,
+  `mac_address` varchar(50) NOT NULL,
+  `device_guid` binary(16) DEFAULT NULL,
+  `device_sn_raw` binary(16) DEFAULT NULL,
+  `device_sn_enc` binary(16) DEFAULT NULL,
+  `fw_version` varchar(10) DEFAULT NULL,
+  `device_name` varchar(50) DEFAULT NULL,
+  `result` varchar(20) NOT NULL,
+  `write_result` varchar(20) DEFAULT NULL,
+  `description` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `ix_pmcl_gn_time` (`generator_name`,`updated_at`),
+  KEY `ix_pmcl_gn_mac` (`generator_name`,`mac_address`),
+  KEY `ix_pmcl_gn_ser` (`generator_name`,`serial`),
+  KEY `idx_pmcl_device_guid` (`device_guid`),
+  KEY `idx_pmcl_gen_guid` (`generator_name`,`device_guid`),
+  KEY `idx_pmcl_result_time` (`result`,`updated_at`),
+  KEY `idx_pmcl_device_sn_raw` (`device_sn_raw`),
+  KEY `idx_pmcl_device_sn_enc` (`device_sn_enc`),
+  KEY `idx_pmcl_gen_device_sn_raw` (`generator_name`,`device_sn_raw`)
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- process_mac_check_log_backup
+CREATE TABLE IF NOT EXISTS `process_mac_check_log_backup` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `line` varchar(50) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `generator_name` varchar(50) NOT NULL,
+  `artist` varchar(50) NOT NULL,
+  `lightstick` varchar(64) NOT NULL,
+  `serial` varchar(20) NOT NULL,
+  `mac_address` varchar(50) NOT NULL,
+  `device_guid` binary(16) DEFAULT NULL,
+  `device_sn_raw` binary(16) DEFAULT NULL,
+  `device_sn_enc` binary(16) DEFAULT NULL,
+  `fw_version` varchar(10) DEFAULT NULL,
+  `device_name` varchar(50) DEFAULT NULL,
+  `result` varchar(20) NOT NULL,
+  `write_result` varchar(20) DEFAULT NULL,
+  `description` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `ix_pmcl_gn_time` (`generator_name`,`updated_at`),
+  KEY `ix_pmcl_gn_mac` (`generator_name`,`mac_address`),
+  KEY `ix_pmcl_gn_ser` (`generator_name`,`serial`),
+  KEY `idx_pmcl_device_guid` (`device_guid`),
+  KEY `idx_pmcl_gen_guid` (`generator_name`,`device_guid`),
+  KEY `idx_pmcl_result_time` (`result`,`updated_at`),
+  KEY `idx_pmcl_bak_device_sn_raw` (`device_sn_raw`),
+  KEY `idx_pmcl_bak_device_sn_enc` (`device_sn_enc`),
+  KEY `idx_pmcl_bak_gen_device_sn_raw` (`generator_name`,`device_sn_raw`)
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- process_mac_check_scan_log
+CREATE TABLE IF NOT EXISTS `process_mac_check_scan_log` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `line` varchar(50) DEFAULT NULL,
+  `mac_address` varchar(50) NOT NULL,
+  `mac_no_colon` varchar(12) NOT NULL,
+  `raw` text NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_pmcsl_mac` (`mac_address`),
+  KEY `idx_pmcsl_line_date` (`line`,`created_at`)
+) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- process_mac_write
+CREATE TABLE IF NOT EXISTS `process_mac_write` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `line` varchar(50) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `generator_name` varchar(50) NOT NULL,
+  `artist` varchar(50) NOT NULL,
+  `lightstick` varchar(64) NOT NULL,
+  `serial` varchar(20) NOT NULL,
+  `mac_address` varchar(50) NOT NULL,
+  `device_guid` binary(16) DEFAULT NULL,
+  `fw_version` varchar(10) DEFAULT NULL,
+  `device_name` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `mac_address` (`mac_address`),
+  KEY `ix_pmw_gn_time` (`generator_name`,`updated_at`),
+  KEY `ix_pmw_gn_mac` (`generator_name`,`mac_address`),
+  KEY `ix_pmw_gn_ser` (`generator_name`,`serial` DESC),
+  KEY `idx_pmw_device_guid` (`device_guid`),
+  KEY `idx_pmw_gen_guid` (`generator_name`,`device_guid`)
+) ENGINE=InnoDB AUTO_INCREMENT=1290232 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- process_mac_write_backup
+CREATE TABLE IF NOT EXISTS `process_mac_write_backup` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `line` varchar(50) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `generator_name` varchar(50) NOT NULL,
+  `artist` varchar(50) NOT NULL,
+  `lightstick` varchar(64) NOT NULL,
+  `serial` varchar(20) NOT NULL,
+  `mac_address` varchar(50) NOT NULL,
+  `device_guid` binary(16) DEFAULT NULL,
+  `fw_version` varchar(10) DEFAULT NULL,
+  `device_name` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `mac_address` (`mac_address`),
+  KEY `ix_pmw_gn_time` (`generator_name`,`updated_at`),
+  KEY `ix_pmw_gn_mac` (`generator_name`,`mac_address`),
+  KEY `ix_pmw_gn_ser` (`generator_name`,`serial` DESC),
+  KEY `idx_pmw_bk_device_guid` (`device_guid`),
+  KEY `idx_pmw_bk_gen_guid` (`generator_name`,`device_guid`)
+) ENGINE=InnoDB AUTO_INCREMENT=7483 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- process_mac_write_log
+CREATE TABLE IF NOT EXISTS `process_mac_write_log` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `line` varchar(50) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `generator_name` varchar(50) NOT NULL,
+  `artist` varchar(50) NOT NULL,
+  `lightstick` varchar(64) NOT NULL,
+  `serial` varchar(20) NOT NULL,
+  `mac_address` varchar(50) NOT NULL,
+  `device_guid` binary(16) DEFAULT NULL,
+  `fw_version` varchar(10) DEFAULT NULL,
+  `device_name` varchar(50) DEFAULT NULL,
+  `result` varchar(50) DEFAULT NULL,
+  `description` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `ix_pmw_log_gn_time` (`generator_name`,`updated_at`),
+  KEY `ix_pmw_log_gn_mac` (`generator_name`,`mac_address`),
+  KEY `idx_pmwl_gen_mac_updated` (`generator_name`,`mac_address`,`updated_at`,`id`),
+  KEY `ix_pmwlog_gn_time_result_serial` (`generator_name`,`updated_at`,`result`,`serial`),
+  KEY `idx_pmwl_merge_check` (`mac_address`,`serial`,`result`,`created_at`),
+  KEY `idx_pmw_log_device_guid` (`device_guid`),
+  KEY `idx_pmw_log_guid_created` (`device_guid`,`created_at`)
+) ENGINE=InnoDB AUTO_INCREMENT=1305905 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- process_mac_write_log_backup
+CREATE TABLE IF NOT EXISTS `process_mac_write_log_backup` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `line` varchar(50) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `generator_name` varchar(50) NOT NULL,
+  `artist` varchar(50) NOT NULL,
+  `lightstick` varchar(64) NOT NULL,
+  `serial` varchar(20) NOT NULL,
+  `mac_address` varchar(50) NOT NULL,
+  `device_guid` binary(16) DEFAULT NULL,
+  `fw_version` varchar(10) DEFAULT NULL,
+  `device_name` varchar(50) DEFAULT NULL,
+  `result` varchar(50) DEFAULT NULL,
+  `description` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `ix_pmw_log_gn_time` (`generator_name`,`updated_at`),
+  KEY `ix_pmw_log_gn_mac` (`generator_name`,`mac_address`),
+  KEY `idx_pmw_log_bk_device_guid` (`device_guid`),
+  KEY `idx_pmw_log_bk_guid_created` (`device_guid`,`created_at`)
+) ENGINE=InnoDB AUTO_INCREMENT=7519 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- process_mac_write_scan_log
+CREATE TABLE IF NOT EXISTS `process_mac_write_scan_log` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `created_at` datetime(3) NOT NULL DEFAULT current_timestamp(3),
+  `line` varchar(32) NOT NULL,
+  `mac_address` varchar(17) NOT NULL,
+  `mac_no_colon` char(12) NOT NULL,
+  `raw` varchar(100) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_scan_mac` (`mac_no_colon`),
+  KEY `idx_scan_line_time` (`line`,`created_at`),
+  KEY `idx_scan_created_at` (`created_at`)
+) ENGINE=InnoDB AUTO_INCREMENT=433084 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+

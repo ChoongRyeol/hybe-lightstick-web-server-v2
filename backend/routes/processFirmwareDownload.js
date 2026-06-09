@@ -75,10 +75,6 @@ router.post("/", async (req, res) => {
   const lockValue = await acquireRedisLock(redis, lockKey, 10);
 
   if (!lockValue) {
-    console.log(
-      `[LOCK][FAIL] key=${lockKey} line=${line} serial=${serial} board=${boardName || "-"}`,
-    );
-
     return res.status(409).json({
       success: false,
       result: "lock_busy",
@@ -311,7 +307,7 @@ router.post("/", async (req, res) => {
     await releaseRedisLock(redis, lockKey, lockValue).catch(() => {});
 
     console.log(
-      `[LOCK][RELEASE] key=${lockKey} line=${line} serial=${serial} board=${boardName || "-"}`,
+      `[LOCK][RELEASE][firmware_download] key=${lockKey} line=${line} generator=${generatorName} serial=${serial} board=${boardName || "-"}`,
     );
   }
 });

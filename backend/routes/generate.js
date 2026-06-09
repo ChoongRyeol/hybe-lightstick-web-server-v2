@@ -167,9 +167,11 @@ router.post("/backup", requireAuth, async (req, res) => {
     "cartonbox_label_print_logs",
     "device_label_print_logs",
     "giftbox_label_print_logs",
+    "process_firmware_download_log",
     "process_compare_log",
     "process_device_test_log",
     "process_mac_check_log",
+    "process_firmware_download",
     "process_compare",
     "process_device_test",
     "process_mac_check",
@@ -259,9 +261,11 @@ router.post("/delete", requireAuth, async (req, res) => {
     "cartonbox_label_print_logs",
     "device_label_print_logs",
     "giftbox_label_print_logs",
+    "process_firmware_download_log",
     "process_compare_log",
     "process_device_test_log",
     "process_mac_check_log",
+    "process_firmware_download",
     "process_compare",
     "process_device_test",
     "process_mac_check",
@@ -1056,8 +1060,8 @@ router.get("/range-summary", async (req, res) => {
           ((a.max_dec - a.min_dec + 1) - a.distinct_count) AS missing_count,
           CASE
             WHEN a.distinct_count = (a.max_dec - a.min_dec + 1)
-              THEN '??YES'
-            ELSE '??NO'
+              THEN 'YES'
+            ELSE 'NO'
           END AS is_continuous
         FROM mac_agg a
       ),
@@ -1287,8 +1291,10 @@ router.post("/merge", requireAuth, async (req, res) => {
       "process_compare_log",
       "process_device_test",
       "process_mac_check",
+      "process_firmware_download",
       "process_device_test_log",
       "process_mac_check_log",
+      "process_firmware_download_log",
     ];
 
 
@@ -1455,7 +1461,16 @@ router.post("/update", async (req, res) => {
     "giftbox_label_print_logs",
   ];
 
-  const ALL_TABLES_FOR_RENAME = ["process_generated_macs", ...TABLES_TO_MOVE];
+  const FW_DOWNLOAD_TABLES = [
+    "process_firmware_download",
+    "process_firmware_download_log",
+  ];
+
+  const ALL_TABLES_FOR_RENAME = [
+    "process_generated_macs",
+    ...TABLES_TO_MOVE,
+    ...FW_DOWNLOAD_TABLES,
+  ];
   const ALLOWED_TABLES = new Set(ALL_TABLES_FOR_RENAME);
 
   function assertAllowedTable(table) {
@@ -1684,6 +1699,19 @@ router.post("/update", async (req, res) => {
         fw_version ?? null,
         genName,
       ]);
+    }
+
+    for (const table of FW_DOWNLOAD_TABLES) {
+      assertAllowedTable(table);
+
+      await conn.query(
+        `
+        UPDATE \`${table}\`
+        SET artist = ?, lightstick = ?, updated_at = NOW(6)
+        WHERE generator_name = ?
+        `,
+        [artist ?? null, lightstick ?? null, genName],
+      );
     }
 
     await conn.query(
