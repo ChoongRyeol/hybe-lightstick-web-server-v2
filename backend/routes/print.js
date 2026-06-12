@@ -20,6 +20,13 @@ function sanitizeLockKey(v) {
     .slice(0, 180); // zk path 과도 길이 방지
 }
 
+function formatProductDate() {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  return `${year}${month}`;
+}
+
 async function acquireLockWithRetry(
   lockPath,
   { maxRetry = 5, delayMs = 120 } = {},
@@ -143,6 +150,10 @@ router.get("/cartonbox_log/latest_by_generator", async (req, res) => {
   } catch (err) {
     res.status(500).json({ success: false, message: "서버 오류" });
   }
+});
+
+router.get("/server_product_date", requireAuth, async (req, res) => {
+  res.json({ success: true, product_date: formatProductDate() });
 });
 
 router.get("/giftbox_logs", requireAuth, async (req, res) => {
@@ -578,6 +589,7 @@ router.get("/logs/exists", async (req, res) => {
 async function savePrintLogs(req, res, tableName) {
   const { logs, generator_name, line } = req.body;
   const user = req.session.user;
+  const isDeviceLabelLog = tableName === "device_label_print_logs";
   if (!Array.isArray(logs) || logs.length === 0 || !generator_name) {
     return res
       .status(400)
@@ -596,6 +608,7 @@ async function savePrintLogs(req, res, tableName) {
         lightstick,
         model,
         certification_info,
+        product_date,
       } = log;
 
       if (!mac_address || !serial || !lightstick || !artist) {
@@ -604,36 +617,57 @@ async function savePrintLogs(req, res, tableName) {
           .json({ success: false, message: "필수 항목 누락 또는 형식 오류" });
       }
 
+      const columns = [
+        "line",
+        "generator_name",
+        "mac_address",
+        "serial",
+        "artist",
+        "lightstick",
+        "model",
+        "certification_info",
+      ];
+      const values = [
+        line,
+        generator_name,
+        mac_address,
+        serial,
+        artist,
+        lightstick,
+        model || null,
+        certification_info || null,
+      ];
+      const updates = [
+        "line = VALUES(line)",
+        "serial = VALUES(serial)",
+        "artist = VALUES(artist)",
+        "lightstick = VALUES(lightstick)",
+        "model = VALUES(model)",
+        "certification_info = VALUES(certification_info)",
+      ];
+
+      if (isDeviceLabelLog) {
+        columns.push("product_date");
+        values.push(formatProductDate());
+        updates.push("product_date = VALUES(product_date)");
+      }
+
+      columns.push("user_id", "user_name", "updated_at");
+      values.push(user.id, user.name);
+      updates.push(
+        "user_id = VALUES(user_id)",
+        "user_name = VALUES(user_name)",
+        "updated_at = NOW(6)",
+      );
+
       await conn.query(
         `
-        INSERT INTO ${tableName} (
-          line, generator_name, mac_address, serial, artist, lightstick, model, certification_info,
-          user_id, user_name, updated_at
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(6))
+        INSERT INTO ${tableName} (${columns.join(", ")})
+        VALUES (${columns.map((c) => (c === "updated_at" ? "NOW(6)" : "?")).join(", ")})
         ON DUPLICATE KEY UPDATE
-          line = VALUES(line),
-          serial = VALUES(serial),
-          artist = VALUES(artist),
-          lightstick = VALUES(lightstick),
-          model = VALUES(model),
-          certification_info = VALUES(certification_info),
-          user_id = VALUES(user_id),
-          user_name = VALUES(user_name),
-          updated_at = NOW(6)
+          ${updates.join(",\n          ")}
         `,
-        [
-          line,
-          generator_name,
-          mac_address,
-          serial,
-          artist,
-          lightstick,
-          model || null,
-          certification_info || null,
-          user.id,
-          user.name,
-        ],
+        values,
       );
     }
 
