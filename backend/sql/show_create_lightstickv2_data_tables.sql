@@ -711,6 +711,37 @@ CREATE TABLE IF NOT EXISTS `process_generated_macs_backup` (
   KEY `idx_pgm_generator_mac` (`generator_name`,`mac_address`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1887575 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
+-- process_generated_macs_backup_summary
+CREATE TABLE IF NOT EXISTS `process_generated_macs_backup_summary` (
+  `generator_name` varchar(255) NOT NULL,
+  `start_mac` varchar(32) DEFAULT NULL,
+  `end_mac` varchar(32) DEFAULT NULL,
+  `start_mac_decimal` bigint(20) unsigned DEFAULT NULL,
+  `end_mac_decimal` bigint(20) unsigned DEFAULT NULL,
+  `expected_count` bigint(20) unsigned NOT NULL DEFAULT 0,
+  `total_count` bigint(20) unsigned NOT NULL DEFAULT 0,
+  `distinct_count` bigint(20) unsigned NOT NULL DEFAULT 0,
+  `duplicate_count` bigint(20) unsigned NOT NULL DEFAULT 0,
+  `missing_count` bigint(20) NOT NULL DEFAULT 0,
+  `is_continuous` varchar(8) NOT NULL DEFAULT 'NO',
+  `serial_start` varchar(128) DEFAULT NULL,
+  `serial_end` varchar(128) DEFAULT NULL,
+  `serial_start_num` bigint(20) unsigned DEFAULT NULL,
+  `serial_end_num` bigint(20) unsigned DEFAULT NULL,
+  `artist` varchar(255) DEFAULT NULL,
+  `lightstick` varchar(255) DEFAULT NULL,
+  `fw_version` varchar(255) DEFAULT NULL,
+  `device_name` varchar(255) DEFAULT NULL,
+  `model` varchar(255) DEFAULT NULL,
+  `certification_info` text DEFAULT NULL,
+  `is_hidden` tinyint(4) NOT NULL DEFAULT 0,
+  `created_at` datetime(6) DEFAULT NULL,
+  `updated_at` datetime(6) NOT NULL DEFAULT current_timestamp(6) ON UPDATE current_timestamp(6),
+  PRIMARY KEY (`generator_name`),
+  KEY `idx_pgmb_summary_created_at` (`created_at`),
+  KEY `idx_pgmb_summary_hidden_created` (`is_hidden`,`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
 -- process_mac_check
 CREATE TABLE IF NOT EXISTS `process_mac_check` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
