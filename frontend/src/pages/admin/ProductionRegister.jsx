@@ -270,8 +270,7 @@ function ProductionRegister() {
       selectedMacs.length === 0 ||
       !startSerial ||
       !generatorName ||
-      !fwVersion ||
-      !deviceName
+      !fwVersion
     ) {
       return alert("설정값을 모두 입력해야 합니다.");
     }

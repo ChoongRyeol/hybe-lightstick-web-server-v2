@@ -658,6 +658,37 @@ CREATE TABLE IF NOT EXISTS `process_generated_macs` (
   KEY `idx_pgm_gen_mac_decimal` (`generator_name`,`mac_decimal`)
 ) ENGINE=InnoDB AUTO_INCREMENT=769 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
+-- process_generated_macs_summary
+CREATE TABLE IF NOT EXISTS `process_generated_macs_summary` (
+  `generator_name` varchar(255) NOT NULL,
+  `start_mac` varchar(32) DEFAULT NULL,
+  `end_mac` varchar(32) DEFAULT NULL,
+  `start_mac_decimal` bigint(20) unsigned DEFAULT NULL,
+  `end_mac_decimal` bigint(20) unsigned DEFAULT NULL,
+  `expected_count` bigint(20) unsigned NOT NULL DEFAULT 0,
+  `total_count` bigint(20) unsigned NOT NULL DEFAULT 0,
+  `distinct_count` bigint(20) unsigned NOT NULL DEFAULT 0,
+  `duplicate_count` bigint(20) unsigned NOT NULL DEFAULT 0,
+  `missing_count` bigint(20) NOT NULL DEFAULT 0,
+  `is_continuous` varchar(8) NOT NULL DEFAULT 'NO',
+  `serial_start` varchar(128) DEFAULT NULL,
+  `serial_end` varchar(128) DEFAULT NULL,
+  `serial_start_num` bigint(20) unsigned DEFAULT NULL,
+  `serial_end_num` bigint(20) unsigned DEFAULT NULL,
+  `artist` varchar(255) DEFAULT NULL,
+  `lightstick` varchar(255) DEFAULT NULL,
+  `fw_version` varchar(255) DEFAULT NULL,
+  `device_name` varchar(255) DEFAULT NULL,
+  `model` varchar(255) DEFAULT NULL,
+  `certification_info` text DEFAULT NULL,
+  `is_hidden` tinyint(4) NOT NULL DEFAULT 0,
+  `created_at` datetime(6) DEFAULT NULL,
+  `updated_at` datetime(6) NOT NULL DEFAULT current_timestamp(6) ON UPDATE current_timestamp(6),
+  PRIMARY KEY (`generator_name`),
+  KEY `idx_pgm_summary_created_at` (`created_at`),
+  KEY `idx_pgm_summary_hidden_created` (`is_hidden`,`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
 -- process_generated_macs_backup
 CREATE TABLE IF NOT EXISTS `process_generated_macs_backup` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -920,4 +951,3 @@ CREATE TABLE IF NOT EXISTS `process_mac_write_scan_log` (
   KEY `idx_scan_line_time` (`line`,`created_at`),
   KEY `idx_scan_created_at` (`created_at`)
 ) ENGINE=InnoDB AUTO_INCREMENT=433084 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
