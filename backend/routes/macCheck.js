@@ -269,6 +269,11 @@ async function macCheckProcessHandler(req, res) {
     });
   } finally {
     if (conn) conn.release();
+
+    const normalizedMac = normalizeMac(body.mac_address);
+    console.log(
+      `[LOCK][RELEASE][mac_check] key=lock:mac_check:${normalizedMac || "-"} line=${line || "-"} generator=${generatorName || "-"} serial=${serial || "-"} mac=${colonMac || "-"} result=${result || "-"}`,
+    );
   }
 }
 
@@ -288,7 +293,7 @@ router.post("/lock", async (req, res) => {
   }
 
   const lockKey = `lock:mac_check:${normalizedMac}`;
-  const lockValue = await acquireRedisLock(redis, lockKey, 10);
+  const lockValue = await acquireRedisLock(redis, lockKey, 3);
   const lockLogMeta = buildLockLogMeta(req.body, {
     mac: colonMac,
     key: lockKey,

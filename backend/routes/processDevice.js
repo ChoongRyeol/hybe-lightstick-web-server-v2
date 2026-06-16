@@ -283,6 +283,10 @@ async function processDeviceHandler(req, res) {
     });
   } finally {
     if (conn) conn.release();
+
+    console.log(
+      `[LOCK][RELEASE][process_device] key=lock:process_device:${normalizedMac || "-"} line=${line || "-"} generator=${generatorName || "-"} serial=${serial || "-"} mac=${colonMac || "-"} result=${result || "-"}`,
+    );
   }
 }
 
