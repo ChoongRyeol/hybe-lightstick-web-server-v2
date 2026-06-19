@@ -114,9 +114,9 @@ async function macCheckProcessHandler(req, res) {
   }
 
   const colonMac = normalizeMacToColon(body.mac_address);
-  const deviceGuidHex = normalizeDeviceGuid(body.device_guid);
-  const deviceSnRawHex = normalizeDeviceSn(body.device_sn_raw);
-  const deviceSnEncHex = normalizeDeviceSn(body.device_sn_enc);
+  const deviceGuidHex = normalizeDeviceGuid(body.device_guid) || null;
+  const deviceSnRawHex = normalizeDeviceSn(body.device_sn_raw) || null;
+  const deviceSnEncHex = normalizeDeviceSn(body.device_sn_enc) || null;
 
   if (result === "PASS") {
     if (!colonMac) {
@@ -127,21 +127,17 @@ async function macCheckProcessHandler(req, res) {
       });
     }
 
-    if (!deviceGuidHex) {
-      return res.status(400).json({
-        success: false,
-        result: "invalid_request",
-        message: "PASS requires a 16-byte device_guid hex value",
-      });
-    }
-
+    // device_guid ?? ?? ??
+    // if (!deviceGuidHex) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     result: "invalid_request",
+    //     message: "PASS requires a 16-byte device_guid hex value",
+    //   });
+    // }
   }
 
   let conn;
-  let firmwareUpdateResult = {
-    firmware_download: 0,
-    firmware_download_log: 0,
-  };
 
   try {
     conn = await dataPool.getConnection();
@@ -220,12 +216,6 @@ async function macCheckProcessHandler(req, res) {
             logId,
           ],
         );
-
-        firmwareUpdateResult = await updateFirmwareDownloadGeneratorByGuid(
-          conn,
-          deviceGuidHex,
-          generatorName,
-        );
       } catch (err) {
         if (err.code === "ER_DUP_ENTRY") {
           await conn.rollback();
@@ -250,11 +240,8 @@ async function macCheckProcessHandler(req, res) {
       registered: result === "PASS",
       result,
       log_id: logId,
-      firmware_update: firmwareUpdateResult,
       message:
-        result === "PASS"
-          ? "Mac check PASS saved"
-          : "Mac check log saved",
+        result === "PASS" ? "Mac check PASS saved" : "Mac check log saved",
     });
   } catch (err) {
     if (conn) await conn.rollback();

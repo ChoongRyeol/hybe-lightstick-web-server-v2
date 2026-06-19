@@ -24,6 +24,45 @@ function normalizeGuid(guid) {
   return hex.length === 32 ? hex : null;
 }
 
+router.post("/daily-counts", async (req, res) => {
+  const { line } = req.body || {};
+
+  if (!line) {
+    return res.status(400).json({
+      success: false,
+      message: "line is required",
+    });
+  }
+
+  try {
+    const [rows] = await dataPool.query(
+      `
+      SELECT
+        SUM(CASE WHEN line = ? THEN 1 ELSE 0 END) AS line_count,
+        COUNT(*) AS total_count
+      FROM process_firmware_download
+      WHERE created_at >= CURDATE()
+        AND created_at < DATE_ADD(CURDATE(), INTERVAL 1 DAY)
+      `,
+      [line],
+    );
+
+    const row = rows?.[0] ?? null;
+
+    return res.json({
+      success: true,
+      line_count: Number(row?.line_count ?? 0),
+      total_count: Number(row?.total_count ?? 0),
+    });
+  } catch (err) {
+    console.error("[processFirmwareDownload/daily-counts] ERROR:", err);
+    return res.status(500).json({
+      success: false,
+      message: "DB error",
+    });
+  }
+});
+
 router.post("/", async (req, res) => {
   const redis = req.app.locals.redisLockClient;
   const body = req.body || {};

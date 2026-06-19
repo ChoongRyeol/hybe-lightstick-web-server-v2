@@ -223,7 +223,7 @@ function SettingsManager() {
               />
 
               <small style={{ color: "#777" }}>
-                Mac Check 공정 프로그램에 적용 됩니다.
+                Mac Write 공정 프로그램에 적용 됩니다.
               </small>
             </div>
 
@@ -397,7 +397,7 @@ function SettingsManager() {
             </div>
 
             <small style={{ color: "#777" }}>
-              Current Check 공정 프로그램에 적용 됩니다.
+              Mac Write 공정 프로그램에 적용 됩니다.
             </small>
 
             {currentUpdatedAt && (
