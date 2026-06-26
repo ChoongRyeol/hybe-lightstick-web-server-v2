@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const crypto = require("crypto");
 
 const { dataPool } = require("../db");
 const { acquireRedisLock, releaseRedisLock } = require("../utils/redisLock");
@@ -72,6 +73,8 @@ router.post("/", async (req, res) => {
   const serial = body.serial || null;
   const boardName = body.board_name || null;
   const result = String(body.result || "").toUpperCase();
+  const evkTime = body.evk_time || body.time || null;
+  const rowId = body.row_id || null;
 
   const rawDeviceGuid = body.device_guid;
   const normalizedGuid = normalizeGuid(rawDeviceGuid);
@@ -109,8 +112,20 @@ router.post("/", async (req, res) => {
 
   // FAIL은 GUID가 없으므로 serial 기준 lock
   // PASS는 GUID 기준 lock
-  const lockTarget = finalDeviceGuidHex || serial;
-  const lockKey = `lock:firmware_download:${lockTarget}`;
+  // boardName is part of the EVK event identity and must remain unchanged.
+  // Use the same non-null key for PASS and FAIL so HTTP retries are idempotent.
+  const eventIdentity = JSON.stringify([
+    line,
+    generatorName,
+    boardName,
+    rowId,
+    evkTime,
+  ]);
+  const eventId = crypto
+    .createHash("sha256")
+    .update(eventIdentity)
+    .digest("hex");
+  const lockKey = `lock:firmware_download:${eventId}`;
   const lockValue = await acquireRedisLock(redis, lockKey, 10);
 
   if (!lockValue) {
@@ -125,6 +140,39 @@ router.post("/", async (req, res) => {
 
   try {
     conn = await dataPool.getConnection();
+
+    const [existingRows] = await conn.query(
+      `
+      SELECT
+        id,
+        result,
+        HEX(device_guid) AS device_guid
+      FROM process_firmware_download_log
+      WHERE line = ?
+        AND generator_name = ?
+        AND board_name <=> ?
+        AND row_id <=> ?
+        AND evk_time <=> ?
+      ORDER BY id DESC
+      LIMIT 1
+      `,
+      [line, generatorName, boardName, rowId, evkTime],
+    );
+
+    if (existingRows.length > 0) {
+      const existing = existingRows[0];
+
+      return res.json({
+        success: true,
+        result: existing.result,
+        log_id: existing.id,
+        registered: existing.result === "PASS",
+        device_guid: existing.device_guid || null,
+        idempotent: true,
+        message: "Firmware download event already saved",
+      });
+    }
+
     await conn.beginTransaction();
 
     const [logResult] = await conn.query(
@@ -210,8 +258,8 @@ router.post("/", async (req, res) => {
         serial,
         finalDeviceGuidBuffer,
 
-        body.row_id || null,
-        body.evk_time || body.time || null,
+        rowId,
+        evkTime,
         body.result_check ?? 0,
         boardName,
         result,
@@ -346,7 +394,7 @@ router.post("/", async (req, res) => {
     await releaseRedisLock(redis, lockKey, lockValue).catch(() => {});
 
     console.log(
-      `[LOCK][RELEASE][firmware_download] key=${lockKey} line=${line} generator=${generatorName} serial=${serial} board=${boardName || "-"}`,
+      `[LOCK][RELEASE][firmware_download] key=${lockKey} event=${eventId} line=${line} generator=${generatorName} serial=${serial} board=${boardName || "-"}`,
     );
   }
 });

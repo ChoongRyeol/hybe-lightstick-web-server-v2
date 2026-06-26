@@ -127,7 +127,7 @@ async function macCheckProcessHandler(req, res) {
       });
     }
 
-    // device_guid ?? ?? ??
+    // device_guid 필수 체크 제거
     // if (!deviceGuidHex) {
     //   return res.status(400).json({
     //     success: false,
